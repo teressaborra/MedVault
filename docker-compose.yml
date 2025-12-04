@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: medvault_db
+      POSTGRES_USER: medvault_user
+      POSTGRES_PASSWORD: medvault_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - medvault_pgdata:/var/lib/postgresql/data
+
+volumes:
+  medvault_pgdata:

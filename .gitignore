@@ -1,3 +1,27 @@
+# Maven
+/medvault/target/
+/target/
+
+# Node / frontend
+/medvault-frontend/node_modules/
+/medvault-frontend/build/
+/medvault-frontend/.env
+/medvault-frontend/.env.*
+
+# IDE
+.idea/
+*.iml
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Docker volumes
+/medvault_pgdata/
+
+# Backups and git backups
+git-backup.zip
+git-backup-frontend.zip
 # Java / Maven
 medvault/target/
 **/target/
