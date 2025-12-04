@@ -1,0 +1,65 @@
+/* App-specific layout and main area */
+main.app-main{ padding:18px 24px; }
+
+/* Header / Navigation */
+.app-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between; /* brand left, nav centered, auth right */
+  gap:12px;
+  padding:12px 28px;
+  background:linear-gradient(90deg, rgba(11,111,176,0.02), rgba(255,255,255,0.0));
+  backdrop-filter:blur(4px);
+  border-bottom:1px solid rgba(6,30,52,0.04);
+  position:relative;
+}
+
+.header-left{ display:flex; flex-direction:column; }
+.brand{ margin:0; font-size:22px; letter-spacing:-0.4px; font-weight:800; color:var(--brand-600); }
+.brand-sub{ font-size:13px; color:var(--muted); margin-top:4px; }
+
+.app-nav{ display:flex; gap:48px; align-items:center; }
+.app-nav{ font-size:16px; }
+.nav-link{
+  color:#072235; /* darker text for nav items */
+  padding:10px 14px;
+  border-radius:8px;
+  text-decoration:none;
+  transition:all 160ms ease;
+  font-weight:800;
+  font-size:16px;
+}
+.nav-link:hover{ color:var(--brand-600); background:rgba(11,111,176,0.06); transform:translateY(-2px); }
+.nav-link.active{
+  color:var(--brand-600);
+  background:transparent;
+  box-shadow:none;
+  position:relative;
+}
+.nav-link.active::after{ content:''; position:absolute; left:10px; right:10px; bottom:-8px; height:3px; background:linear-gradient(90deg,var(--brand),var(--accent)); border-radius:6px; }
+
+/* Remove default focus blue box but keep an accessible focus-visible indicator */
+.nav-link:focus{ outline:none; box-shadow:none; }
+.nav-link:focus-visible{ outline:2px solid rgba(31,111,235,0.14); outline-offset:4px; border-radius:8px; }
+
+@media (max-width:720px){
+  .app-header{ flex-direction:column; align-items:flex-start; gap:8px; }
+  .app-nav{ width:100%; overflow-x:auto; }
+  .nav-link{ white-space:nowrap; }
+}
+
+/* Header layout helpers */
+.header-center{ flex:1 1 auto; display:flex; justify-content:center; }
+.header-right{ margin-left:auto; display:flex; gap:12px; align-items:center; }
+
+/* Auth CTA styles */
+.auth-link{ text-decoration:none; padding:6px 10px; border-radius:10px; font-weight:700; }
+.auth-link.login{ color:#0b1220; border:1px solid rgba(16,24,40,0.04); background:transparent; }
+.auth-link.signup{ background:linear-gradient(90deg,var(--brand),var(--brand-600)); color:white; box-shadow:0 14px 36px rgba(7,91,143,0.12); padding:10px 16px; border-radius:12px; }
+.auth-link.signup::after{ content:''; display:inline-block; width:6px; }
+
+/* subtle decorative accent in header */
+.app-header::after{ content:''; position:absolute; right:46%; top:8px; width:220px; height:86px; background: radial-gradient(circle at 20% 30%, rgba(16,185,129,0.06), transparent 30%); pointer-events:none; border-radius:8px; }
+.auth-link.signup:hover{ transform:translateY(-3px); }
+.auth-link:focus{ outline:none; }
+.auth-link:focus-visible{ outline:2px solid rgba(31,111,235,0.12); outline-offset:3px; border-radius:10px; }

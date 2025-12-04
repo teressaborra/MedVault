@@ -1,0 +1,227 @@
+/* ============================
+   ADMIN DASHBOARD — POLISHED UI
+   ============================ */
+
+:root {
+  --brand: #2EAF7D;
+  --brand-600: #02353C;
+  --muted: #6b7280;
+  --card-bg: #ffffff;
+  --border: rgba(2, 6, 23, 0.06);
+  --shadow: 0 16px 40px rgba(2, 6, 23, 0.06);
+}
+
+/* Wrapper */
+.admin-wrap {
+  padding: 24px 0;
+}
+
+/* Header */
+.admin-header h1 {
+  font-size: 32px;
+  margin-bottom: 6px;
+  color: #06203a;
+}
+
+.admin-header p {
+  color: var(--muted);
+  margin: 0 0 22px 0;
+  font-size: 15px;
+}
+
+/* Body layout */
+.admin-body {
+  display: flex;
+  gap: 32px;
+  margin-top: 16px;
+}
+
+/* Sidebar */
+.admin-sidebar {
+  width: 210px;
+}
+
+.admin-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Sidebar Tabs */
+.admin-sidebar button {
+  background: #f7fafd;
+  border: 1px solid rgba(6, 30, 52, 0.06);
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 600;
+  color: #06203a;
+  transition: 0.15s ease;
+}
+
+.admin-sidebar button:hover {
+  background: #eef7ff;
+}
+
+.admin-sidebar button.active {
+  background: linear-gradient(90deg, var(--brand), var(--brand-600));
+  color: white;
+  box-shadow: 0 12px 32px rgba(7, 91, 143, 0.15);
+  border: none;
+  transform: translateY(-2px);
+}
+
+/* Seed Button */
+.seed-btn {
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px dashed rgba(7, 91, 143, 0.2);
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--brand-600);
+}
+
+.seed-btn:hover {
+  background: rgba(7, 91, 143, 0.06);
+}
+
+/* Sidebar Link */
+.admin-sidebar a {
+  margin-top: 4px;
+  color: var(--brand-600);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-sidebar a:hover {
+  text-decoration: underline;
+}
+
+/* Main Content Area */
+.admin-main {
+  flex: 1;
+}
+
+/* User Cards Section */
+.admin-cards {
+  padding: 6px 0;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+/* User Card */
+.user-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  transition: 0.15s ease;
+}
+
+.user-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 48px rgba(6, 30, 52, 0.10);
+}
+
+/* Avatar */
+.user-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #7c5cff, #6a8cff);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+/* User Info Section */
+.user-top {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.user-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #06203a;
+}
+
+.user-email,
+.user-created {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Role & Status */
+.user-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.role-badge {
+  background: rgba(16, 24, 40, 0.05);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.status-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* Status colors */
+.status-approved { background: #ecfdf5; color: #15803d; }
+.status-pending { background: #fff4e5; color: #b45309; }
+.status-rejected { background: #fff1f2; color: #be123c; }
+
+/* Action buttons */
+.user-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.user-actions .btn {
+  min-height: 40px;
+  font-size: 14px;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-body {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    display: flex;
+    justify-content: start;
+    gap: 10px;
+  }
+
+  .admin-sidebar nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

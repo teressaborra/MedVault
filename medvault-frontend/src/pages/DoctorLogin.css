@@ -1,0 +1,4 @@
+/* Doctor login - same base as admin */
+@import './AdminLogin.css';
+
+/* extra doctor-specific styles could go here */

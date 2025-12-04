@@ -1,0 +1,33 @@
+# Java / Maven
+medvault/target/
+**/target/
+*.log
+*.class
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node / React
+medvault-frontend/node_modules/
+medvault-frontend/build/
+medvault-frontend/dist/
+medvault-frontend/.env
+medvault-frontend/.env.local
+
+# Docker
+*.env
+docker-compose.override.yml
+
+# Java artifacts
+*.jar
+*.war
+
+# Maven local repo
+.m2/

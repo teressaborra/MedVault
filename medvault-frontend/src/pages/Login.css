@@ -1,0 +1,14 @@
+/* Simple styles for Login selection */
+.login-page h1{ margin-top:6px; }
+.muted{ color:var(--muted); margin-bottom:14px; }
+
+.login-grid{ display:flex; gap:16px; flex-wrap:wrap; }
+.login-card{ flex:1 1 220px; background:var(--card); border-radius:10px; padding:16px; text-decoration:none; color:inherit; border:1px solid #eef2f6; box-shadow:0 6px 18px rgba(16,24,40,0.03); }
+.login-card h3{ margin:0 0 6px 0; }
+.login-card p{ margin:0; color:var(--muted); font-size:14px; }
+
+.login-card:hover{ transform:translateY(-4px); transition:transform 160ms ease; }
+
+@media (max-width:640px){
+  .login-grid{ flex-direction:column; }
+}

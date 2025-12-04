@@ -1,0 +1,4 @@
+/* Patient login - reuse base login styles */
+@import './AdminLogin.css';
+
+/* patient specific overrides can be placed here */
