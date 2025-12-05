@@ -1,5 +1,6 @@
 package com.medvault.medvault.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
@@ -20,6 +21,14 @@ public class User {
     private String passwordHash;
 
     private String roles;
+
+    @Column(name = "is_approved")
+    private Boolean isApproved = false;
+
+    private String status;
+
+    @Column(name = "first_login_required")
+    private Boolean firstLoginRequired = false;
 
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
@@ -45,7 +54,17 @@ public class User {
     public void setEmail(String email) { this.email = email; }
 
     public String getPasswordHash() { return passwordHash; }
+    @JsonIgnore
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+
+    public Boolean getIsApproved() { return isApproved; }
+    public void setIsApproved(Boolean isApproved) { this.isApproved = isApproved; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public Boolean getFirstLoginRequired() { return firstLoginRequired; }
+    public void setFirstLoginRequired(Boolean firstLoginRequired) { this.firstLoginRequired = firstLoginRequired; }
 
     public String getRoles() { return roles; }
     public void setRoles(String roles) { this.roles = roles; }

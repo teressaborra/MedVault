@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
+import { Routes, Route, NavLink, useLocation } from "react-router-dom";
 import "./App.css";
 import Home from "./pages/Home";
 import PatientLogin from "./pages/PatientLogin";
@@ -15,28 +15,30 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import ContactUs from "./pages/ContactUs";
 
 function App() {
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
+  const isDashboard = location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/admin");
+
   return (
-    <Router>
-      <div>
+    <div>
+      {!isHomePage && !isDashboard && (
         <header className="app-header">
           <div className="header-left">
             <h2 className="brand">MedVault</h2>
             <div className="brand-sub">Healthcare & Appointments</div>
           </div>
 
-          
-
           <div className="header-right">
-            <NavLink to="/" className={({isActive}) => "nav-link" + (isActive ? " active" : "")}>Home</NavLink>
-              <NavLink to="/contact" className={({isActive}) => "nav-link" + (isActive ? " active" : "")}>Contact Us</NavLink>
-        
-            <NavLink to="/login" className={({isActive}) => "auth-link login" + (isActive ? " active" : "")}>Login</NavLink>
-            <NavLink to="/signup" className={({isActive}) => "auth-link signup" + (isActive ? " active" : "")}>Sign up</NavLink>
+            <NavLink to="/" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>Home</NavLink>
+            <NavLink to="/contact" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>Contact Us</NavLink>
+            <NavLink to="/login" className={({ isActive }) => "auth-link login" + (isActive ? " active" : "")}>Login</NavLink>
+            <NavLink to="/signup" className={({ isActive }) => "auth-link signup" + (isActive ? " active" : "")}>Sign up</NavLink>
           </div>
         </header>
+      )}
 
-        <main className="app-main">
-          <div className="container">
+      <main className={isHomePage ? "home-main" : "app-main"}>
+        <div className={isHomePage || isDashboard ? "" : "container"}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/signup" element={<Signup />} />
@@ -51,10 +53,9 @@ function App() {
             <Route path="/login/doctor" element={<DoctorLogin />} />
             <Route path="/login/admin" element={<AdminLogin />} />
           </Routes>
-          </div>
-        </main>
-      </div>
-    </Router>
+        </div>
+      </main>
+    </div>
   );
 }
 

@@ -6,48 +6,40 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.medvault.medvault.dto.SignupRequest;
 import com.medvault.medvault.dto.SignupResponse;
-
+import com.medvault.medvault.service.UserService;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:3000") 
+@CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {
+
+    private final UserService userService;
+
+    public AuthController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest req) {
-
+        // DB-backed login: find by email and verify password
         String email = req.getEmail();
         String password = req.getPassword();
-        String role = req.getRole(); // PATIENT / DOCTOR / ADMIN
 
-        if (role.equalsIgnoreCase("PATIENT")
-                && email.equals("patient@med.com")
-                && password.equals("patient123")) {
-            return ResponseEntity.ok(
-                    new LoginResponse(true, "Patient Login Successful", "PATIENT", "Test Patient")
-            );
+        var userOpt = userService.findByEmail(email);
+        if (userOpt.isPresent()) {
+            var user = userOpt.get();
+            if (userService.checkPassword(user, password)) {
+                String role = user.getRoles();
+                String name = user.getUsername();
+                return ResponseEntity.ok(new LoginResponse(true, "Login successful", role, name, user.getId()));
+            } else {
+                return ResponseEntity.ok(new LoginResponse(false, "Invalid credentials", null, null, null));
+            }
         }
 
-        if (role.equalsIgnoreCase("DOCTOR")
-                && email.equals("doctor@med.com")
-                && password.equals("doctor123")) {
-            return ResponseEntity.ok(
-                    new LoginResponse(true, "Doctor Login Successful", "DOCTOR", "Test Doctor")
-            );
-        }
-
-        if (role.equalsIgnoreCase("ADMIN")
-                && email.equals("admin@med.com")
-                && password.equals("admin123")) {
-            return ResponseEntity.ok(
-                    new LoginResponse(true, "Admin Login Successful", "ADMIN", "System Admin")
-            );
-        }
-
-        return ResponseEntity.ok(
-                new LoginResponse(false, "Invalid Credentials", null, null)
-        );
+        return ResponseEntity.ok(new LoginResponse(false, "Invalid credentials", null, null, null));
     }
+
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@RequestBody SignupRequest req) {
 
@@ -83,14 +75,21 @@ public class AuthController {
             return ResponseEntity.ok(new SignupResponse(false, "Invalid role. Only patient/doctor allowed."));
         }
 
-        // In a real app: check if email already exists, hash password, save to DB, mark PENDING, etc.
-        // For now: log the signup request (do NOT log password in production)
-        System.out.println("SIGNUP REQUEST -> name: " + name + ", email: " + email + ", role: " + normalizedRole);
+        // Check for existing email
+        if (userService.findByEmail(email).isPresent()) {
+            return ResponseEntity.ok(new SignupResponse(false, "Email already registered."));
+        }
 
-        // Pretend we saved it successfully
-        String msg = "Signup request submitted successfully. Admin will review and approve your account.";
+        // Register the user in DB (username = name)
+        try {
+            userService.register(name, email, password, normalizedRole);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500)
+                    .body(new SignupResponse(false, "Unable to save user: " + ex.getMessage()));
+        }
+
+        String msg = "Signup submitted successfully. Admin will review and approve your account.";
         return ResponseEntity.ok(new SignupResponse(true, msg));
     }
-
 
 }

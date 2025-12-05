@@ -5,16 +5,33 @@ public class LoginResponse {
     private String message;
     private String role;
     private String name;
+    private Long userId;
 
-    public LoginResponse(boolean success, String message, String role, String name) {
+    public LoginResponse(boolean success, String message, String role, String name, Long userId) {
         this.success = success;
         this.message = message;
         this.role = role;
         this.name = name;
+        this.userId = userId;
     }
 
-    public boolean isSuccess() { return success; }
-    public String getMessage() { return message; }
-    public String getRole() { return role; }
-    public String getName() { return name; }
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
 }

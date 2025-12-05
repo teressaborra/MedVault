@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: medvault_db
       POSTGRES_USER: medvault_user
-      POSTGRES_PASSWORD: medvault_pass
+      POSTGRES_PASSWORD: root
     ports:
       - "5432:5432"
     volumes:

@@ -16,13 +16,22 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public User register(String username, String email, String plainPassword) {
+    public User register(String username, String email, String plainPassword, String role) {
         User u = new User();
         u.setUsername(username);
         u.setEmail(email);
         u.setPasswordHash(passwordEncoder.encode(plainPassword));
-        u.setRoles("ROLE_USER");
+        // Store role as uppercase role name (e.g. PATIENT / DOCTOR / ADMIN)
+        if (role != null) {
+            u.setRoles(role.toUpperCase());
+        } else {
+            u.setRoles("USER");
+        }
         return userRepository.save(u);
+    }
+
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 
     public Optional<User> findByUsername(String username) {
@@ -31,6 +40,17 @@ public class UserService {
 
     public boolean checkPassword(User user, String plainPassword) {
         return passwordEncoder.matches(plainPassword, user.getPasswordHash());
+    }
+
+    public Optional<User> findById(Long id) { return userRepository.findById(id); }
+
+    public java.util.List<User> findByRole(String role) { return userRepository.findByRoles(role); }
+
+    public User setApproval(Long id, boolean approved, String status) {
+        User u = userRepository.findById(id).orElseThrow(() -> new java.util.NoSuchElementException("User not found"));
+        u.setIsApproved(approved);
+        u.setStatus(status);
+        return userRepository.save(u);
     }
 }
 

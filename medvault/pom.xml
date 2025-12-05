@@ -70,6 +70,12 @@
 			<artifactId>flyway-core</artifactId>
 		</dependency>
 
+	<!-- Flyway PostgreSQL support -->
+	<dependency>
+		<groupId>org.flywaydb</groupId>
+		<artifactId>flyway-database-postgresql</artifactId>
+	</dependency>
+
 		<!-- BCrypt for password hashing -->
 		<dependency>
 			<groupId>org.springframework.security</groupId>

@@ -25,24 +25,24 @@ function DoctorLogin() {
         const first = res.data.firstLoginRequired;
         const uid = res.data.userId || res.data.user_id;
         localStorage.setItem('mv_current_user', JSON.stringify({ userId: uid, role: 'DOCTOR', name: res.data.name }));
-        if(first) navigate('/update-password');
+        if (first) navigate('/update-password');
         else navigate('/dashboard/doctor');
       } else {
         setMessage(res.data.message);
       }
     } catch (err) {
-      try{
+      try {
         const r = await mock.login({ email, password, role: 'DOCTOR' });
-        if(r.success){
+        if (r.success) {
           setName(r.name || '');
           setMessage(r.message);
           localStorage.setItem('mv_current_user', JSON.stringify({ userId: r.userId, role: 'DOCTOR', name: r.name }));
-          if(r.firstLoginRequired) navigate('/update-password');
+          if (r.firstLoginRequired) navigate('/update-password');
           else navigate('/dashboard/doctor');
         } else {
           setMessage(r.message);
         }
-      }catch(e){
+      } catch (e) {
         setMessage("Something went wrong. Please try again.");
       }
     }
@@ -53,45 +53,45 @@ function DoctorLogin() {
   return (
     <div className="login-page">
       <div className="login-card">
-      <h1>Doctor Login</h1>
+        <h1>Doctor Login</h1>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "10px" }}>
-          <label>
-            Email:{" "}
-            <input
-              type="email"
-              value={email}
-              required
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </label>
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: "10px" }}>
+            <label>
+              Email:{" "}
+              <input
+                type="email"
+                value={email}
+                required
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </label>
+          </div>
 
-        <div style={{ marginBottom: "10px" }}>
-          <label>
-            Password:{" "}
-            <input
-              type="password"
-              value={password}
-              required
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </label>
-        </div>
+          <div style={{ marginBottom: "10px" }}>
+            <label>
+              Password:{" "}
+              <input
+                type="password"
+                value={password}
+                required
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </label>
+          </div>
 
-        <button type="submit">Login</button>
-      </form>
+          <button type="submit">Login</button>
+        </form>
 
-      {message && (
+        {message && (
+          <p style={{ marginTop: "10px" }}>
+            {message} {name && ` | Welcome, ${name}!`}
+          </p>
+        )}
+
         <p style={{ marginTop: "10px" }}>
-          {message} {name && ` | Welcome, ${name}!`}
+          <Link to="/">Back to Home</Link>
         </p>
-      )}
-
-      <p style={{ marginTop: "10px" }}>
-        <Link to="/">Back to Home</Link>
-      </p>
       </div>
     </div>
   );

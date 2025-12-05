@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
 import "./Dashboard.css";
 
-function DoctorDashboard(){
+function DoctorDashboard() {
   const [today, setToday] = useState([]);
   const [appointments, setAppointments] = useState([]);
 
-  useEffect(()=>{
+  useEffect(() => {
     // pull mock appointments (if any) for demo
     const appts = JSON.parse(localStorage.getItem('mv_appointments') || '[]');
     const now = new Date();
-    const todayStr = now.toISOString().slice(0,10);
-    setAppointments(appts.slice(0,12));
-    setToday(appts.filter(a=> a.whenISO && a.whenISO.startsWith(todayStr)).slice(0,8));
-  },[]);
+    const todayStr = now.toISOString().slice(0, 10);
+    setAppointments(appts.slice(0, 12));
+    setToday(appts.filter(a => a.whenISO && a.whenISO.startsWith(todayStr)).slice(0, 8));
+  }, []);
 
   const stats = {
     patients: 150,
@@ -31,7 +31,10 @@ function DoctorDashboard(){
           <a>Messages</a>
           <a>Documents</a>
           <a>Settings</a>
-          <a className="muted">Logout</a>
+          <a className="muted" onClick={() => {
+            localStorage.removeItem('mv_current_user');
+            window.location.href = '/';
+          }}>Logout</a>
         </nav>
       </aside>
 
@@ -65,7 +68,7 @@ function DoctorDashboard(){
             <div className="card small-cards">
               <h4>Appointment Requests</h4>
               <ul>
-                {appointments.slice(0,4).map(a=> (
+                {appointments.slice(0, 4).map(a => (
                   <li key={a.id} className="appt-row">
                     <div>
                       <strong>{a.patientName || 'Unknown'}</strong>

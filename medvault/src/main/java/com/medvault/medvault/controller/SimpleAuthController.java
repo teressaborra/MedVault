@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth/persist")
+@CrossOrigin(origins = "http://localhost:3000")
 public class SimpleAuthController {
     private final UserService userService;
 
@@ -14,7 +15,7 @@ public class SimpleAuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
-        User created = userService.register(req.username, req.email, req.password);
+        User created = userService.register(req.username, req.email, req.password, "USER");
         return ResponseEntity.ok(created.getId());
     }
 
