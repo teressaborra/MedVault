@@ -9,9 +9,14 @@ main.app-main {
   align-items: center;
   justify-content: space-between;
   padding: 20px 40px;
-  background: transparent;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  position: relative;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(90deg, #0088ff, #00d4ff, #0088ff) 1;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0, 136, 255, 0.08);
+  backdrop-filter: blur(10px);
 }
 
 .header-left {
@@ -24,16 +29,22 @@ main.app-main {
   font-family: 'Playfair Display', serif;
   font-size: 28px;
   font-weight: 700;
-  color: var(--text);
+  background: linear-gradient(135deg, #0088ff 0%, #0066cc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   letter-spacing: -0.5px;
 }
 
 .brand-sub {
   font-size: 12px;
-  color: var(--muted);
+  background: linear-gradient(90deg, #0088ff, #00c6ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin-top: 2px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  font-weight: 600;
+  letter-spacing: 1px;
   text-transform: uppercase;
 }
 
@@ -45,23 +56,42 @@ main.app-main {
 }
 
 .nav-link {
-  color: rgba(255, 255, 255, 0.7);
-  padding: 8px 12px;
-  border-radius: 8px;
+  color: #4a5568;
+  padding: 10px 20px;
+  border-radius: 10px;
   text-decoration: none;
-  transition: all 0.2s ease;
-  font-weight: 500;
+  transition: all 0.3s ease;
+  font-weight: 600;
   font-size: 15px;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0088ff, #00d4ff);
+  transition: width 0.3s ease;
 }
 
 .nav-link:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.05);
+  color: #0088ff;
+  background: linear-gradient(135deg, #e3f5ff 0%, #d4ebff 100%);
+  transform: translateY(-2px);
+}
+
+.nav-link:hover::before {
+  width: 100%;
 }
 
 .nav-link.active {
-  color: var(--brand);
-  background: rgba(63, 208, 201, 0.1);
+  color: #ffffff;
+  background: linear-gradient(135deg, #0088ff 0%, #0066cc 100%);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
 }
 
 /* Auth CTA styles */
@@ -75,24 +105,33 @@ main.app-main {
 }
 
 .auth-link.login {
-  color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #1a2332;
+  border: 2px solid transparent;
+  background: linear-gradient(#ffffff, #ffffff) padding-box,
+              linear-gradient(135deg, #0088ff, #00d4ff) border-box;
+  font-weight: 600;
 }
 
 .auth-link.login:hover {
-  border-color: var(--brand);
-  color: var(--brand);
+  background: linear-gradient(135deg, #e3f5ff 0%, #d4ebff 100%) padding-box,
+              linear-gradient(135deg, #0088ff, #00d4ff) border-box;
+  color: #0088ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 136, 255, 0.2);
 }
 
 .auth-link.signup {
-  background: var(--brand);
-  color: #0d2b26;
+  background: linear-gradient(135deg, #0088ff 0%, #0066cc 100%);
+  color: #ffffff;
   border: none;
+  box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+  font-weight: 700;
 }
 
 .auth-link.signup:hover {
-  background: #ffffff;
-  transform: translateY(-2px);
+  background: linear-gradient(135deg, #00d4ff 0%, #0088ff 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 136, 255, 0.4);
 }
 
 @media (max-width: 768px) {

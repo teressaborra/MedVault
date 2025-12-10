@@ -4,6 +4,12 @@ import "./Dashboard.css";
 function PatientDashboard() {
   const [user, setUser] = useState(null);
   const [appointments, setAppointments] = useState([]);
+  const [activeView, setActiveView] = useState('dashboard');
+  const [profileData, setProfileData] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [formData, setFormData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     // For the mock flow we read user id from localStorage 'mv_current_user' if set
@@ -17,6 +23,67 @@ function PatientDashboard() {
     setAppointments(appts.filter(a => a.userId === (cur ? cur.userId : null)).slice(0, 6));
   }, []);
 
+  useEffect(() => {
+    if (activeView === 'profile' && user) {
+      fetchProfile();
+    }
+  }, [activeView, user]);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/patient/profile/${user.userId}`);
+      const data = await response.json();
+      
+      if (data.success === false) {
+        setIsEditMode(true);
+        setFormData({ userId: user.userId });
+      } else {
+        setProfileData(data);
+        setFormData(data);
+        setIsEditMode(false);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setIsEditMode(true);
+      setFormData({ userId: user.userId });
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const response = await fetch('http://localhost:8080/api/patient/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, userId: user.userId })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setMessage('Profile saved successfully! ✓');
+        setProfileData(data.data);
+        setIsEditMode(false);
+        fetchProfile();
+      } else {
+        setMessage('Error: ' + data.message);
+      }
+    } catch (error) {
+      setMessage('Error saving profile. Please try again.');
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('mv_current_user');
     window.location.href = '/';
@@ -27,11 +94,11 @@ function PatientDashboard() {
       <aside className="left-nav card">
         <h2 className="nav-brand">MedVault</h2>
         <nav className="nav-list">
-          <a className="active">Dashboard</a>
+          <a className={activeView === 'dashboard' ? 'active' : ''} onClick={() => setActiveView('dashboard')}>Dashboard</a>
           <a href="/appointments">Appointments</a>
           <a>Prescriptions</a>
           <a>Records</a>
-          <a>Messages</a>
+          <a className={activeView === 'profile' ? 'active' : ''} onClick={() => setActiveView('profile')}>My Profile</a>
           <a>Settings</a>
           <a className="muted" onClick={handleLogout}>Logout</a>
         </nav>
@@ -47,17 +114,19 @@ function PatientDashboard() {
           </div>
         </header>
 
-        <section className="hero card">
-          <div className="hero-left">
-            <h3>Hello, {user ? user.name : 'Patient'}</h3>
-            <p className="muted">Here is your health summary.</p>
-          </div>
-          <div className="hero-right">
-            <div className="stat-pill">Patient Account</div>
-          </div>
-        </section>
+        {activeView === 'dashboard' && (
+          <>
+            <section className="hero card">
+              <div className="hero-left">
+                <h3>Hello, {user ? user.name : 'Patient'}</h3>
+                <p className="muted">Here is your health summary.</p>
+              </div>
+              <div className="hero-right">
+                <div className="stat-pill">Patient Account</div>
+              </div>
+            </section>
 
-        <section className="dash-grid">
+            <section className="dash-grid">
           <div>
             <div className="card activity-card">
               <h3>Health Activity</h3>
@@ -159,6 +228,201 @@ function PatientDashboard() {
             </div>
           </aside>
         </section>
+          </>
+        )}
+
+        {activeView === 'profile' && (
+          <section className="card" style={{ padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <div>
+                <h2>Patient Profile</h2>
+                <p className="muted">Manage your personal and medical information</p>
+              </div>
+              {!isEditMode && profileData && (
+                <button className="btn primary" onClick={() => setIsEditMode(true)}>
+                  Edit Profile
+                </button>
+              )}
+            </div>
+
+            {message && (
+              <div style={{ padding: '1rem', marginBottom: '1rem', borderRadius: '8px', background: message.includes('success') ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)', color: message.includes('success') ? '#0f0' : '#f00' }}>
+                {message}
+              </div>
+            )}
+
+            {!isEditMode && profileData ? (
+              <div style={{ display: 'grid', gap: '2rem' }}>
+                <div>
+                  <h3 style={{ marginBottom: '1rem', color: 'var(--brand)' }}>Personal Information</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                    <div><strong>Full Name:</strong> {profileData.fullName || 'N/A'}</div>
+                    <div><strong>Father/Guardian:</strong> {profileData.fatherGuardianName || 'N/A'}</div>
+                    <div><strong>Date of Birth:</strong> {profileData.dateOfBirth || 'N/A'}</div>
+                    <div><strong>Gender:</strong> {profileData.gender || 'N/A'}</div>
+                    <div><strong>Blood Group:</strong> {profileData.bloodGroup || 'N/A'}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ marginBottom: '1rem', color: 'var(--brand)' }}>Contact Information</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                    <div><strong>Mobile:</strong> {profileData.mobileNumber || 'N/A'}</div>
+                    <div><strong>Alternate Phone:</strong> {profileData.alternatePhone || 'N/A'}</div>
+                    <div><strong>Address:</strong> {profileData.address || 'N/A'}</div>
+                    <div><strong>City:</strong> {profileData.city || 'N/A'}</div>
+                    <div><strong>State:</strong> {profileData.state || 'N/A'}</div>
+                    <div><strong>Postal Code:</strong> {profileData.postalCode || 'N/A'}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ marginBottom: '1rem', color: 'var(--brand)' }}>Government ID</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                    <div><strong>ID Type:</strong> {profileData.governmentIdType || 'N/A'}</div>
+                    <div><strong>ID Number:</strong> {profileData.governmentIdNumber || 'N/A'}</div>
+                    <div><strong>Verification Status:</strong> 
+                      <span style={{ marginLeft: '0.5rem', padding: '0.25rem 0.75rem', borderRadius: '12px', background: profileData.documentVerificationStatus === 'VERIFIED' ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 165, 0, 0.2)', color: profileData.documentVerificationStatus === 'VERIFIED' ? '#0f0' : '#ffa500', fontSize: '0.875rem' }}>
+                        {profileData.documentVerificationStatus || 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ marginBottom: '1rem', color: 'var(--brand)' }}>Medical History</h3>
+                  <div style={{ display: 'grid', gap: '1rem' }}>
+                    <div><strong>Existing Conditions:</strong> {profileData.existingConditions || 'None'}</div>
+                    <div><strong>Allergies:</strong> {profileData.allergies || 'None'}</div>
+                    <div><strong>Current Medications:</strong> {profileData.currentMedications || 'None'}</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '2rem' }}>
+                <div>
+                  <h3 style={{ marginBottom: '1rem', color: 'var(--brand)' }}>Personal Information</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                    <div>
+                      <label>Full Name *</label>
+                      <input type="text" name="fullName" value={formData.fullName || ''} onChange={handleChange} required />
+                    </div>
+                    <div>
+                      <label>Father/Guardian Name</label>
+                      <input type="text" name="fatherGuardianName" value={formData.fatherGuardianName || ''} onChange={handleChange} />
+                    </div>
+                    <div>
+                      <label>Date of Birth *</label>
+                      <input type="date" name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleChange} required />
+                    </div>
+                    <div>
+                      <label>Gender *</label>
+                      <select name="gender" value={formData.gender || ''} onChange={handleChange} required>
+                        <option value="">Select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label>Blood Group</label>
+                      <select name="bloodGroup" value={formData.bloodGroup || ''} onChange={handleChange}>
+                        <option value="">Select</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ marginBottom: '1rem', color: 'var(--brand)' }}>Contact Information</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                    <div>
+                      <label>Mobile Number *</label>
+                      <input type="tel" name="mobileNumber" value={formData.mobileNumber || ''} onChange={handleChange} required />
+                    </div>
+                    <div>
+                      <label>Alternate Phone</label>
+                      <input type="tel" name="alternatePhone" value={formData.alternatePhone || ''} onChange={handleChange} />
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label>Address *</label>
+                      <input type="text" name="address" value={formData.address || ''} onChange={handleChange} required />
+                    </div>
+                    <div>
+                      <label>City *</label>
+                      <input type="text" name="city" value={formData.city || ''} onChange={handleChange} required />
+                    </div>
+                    <div>
+                      <label>State *</label>
+                      <input type="text" name="state" value={formData.state || ''} onChange={handleChange} required />
+                    </div>
+                    <div>
+                      <label>Postal Code *</label>
+                      <input type="text" name="postalCode" value={formData.postalCode || ''} onChange={handleChange} required />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ marginBottom: '1rem', color: 'var(--brand)' }}>Government ID</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                    <div>
+                      <label>ID Type</label>
+                      <select name="governmentIdType" value={formData.governmentIdType || ''} onChange={handleChange}>
+                        <option value="">Select</option>
+                        <option value="Aadhar">Aadhar Card</option>
+                        <option value="PAN">PAN Card</option>
+                        <option value="Passport">Passport</option>
+                        <option value="DrivingLicense">Driving License</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label>ID Number</label>
+                      <input type="text" name="governmentIdNumber" value={formData.governmentIdNumber || ''} onChange={handleChange} />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ marginBottom: '1rem', color: 'var(--brand)' }}>Medical History</h3>
+                  <div style={{ display: 'grid', gap: '1rem' }}>
+                    <div>
+                      <label>Existing Conditions</label>
+                      <textarea name="existingConditions" value={formData.existingConditions || ''} onChange={handleChange} rows="3" placeholder="e.g., Diabetes, Hypertension" />
+                    </div>
+                    <div>
+                      <label>Allergies</label>
+                      <textarea name="allergies" value={formData.allergies || ''} onChange={handleChange} rows="2" placeholder="e.g., Penicillin, Peanuts" />
+                    </div>
+                    <div>
+                      <label>Current Medications</label>
+                      <textarea name="currentMedications" value={formData.currentMedications || ''} onChange={handleChange} rows="3" placeholder="e.g., Metformin 500mg twice daily" />
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                  {profileData && (
+                    <button type="button" className="btn outline" onClick={() => { setIsEditMode(false); setFormData(profileData); }}>
+                      Cancel
+                    </button>
+                  )}
+                  <button type="submit" className="btn primary" disabled={loading}>
+                    {loading ? 'Saving...' : 'Save Profile'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
+        )}
       </main>
     </div>
   );

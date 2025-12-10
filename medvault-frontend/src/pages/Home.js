@@ -26,28 +26,28 @@ function Home() {
 
       {/* Hero Section */}
       <section className="hero-section">
-        <div className="hero-content">
-          <h1 className="hero-title">
-            The Best Healthcare Experience for You
-          </h1>
+        <div className="hero-overlay"></div>
+        <div className="hero-container">
+          <div className="hero-content">
+            <div className="hero-badge">
+              <span className="heart-icon">❤️</span>
+              <span>WE GIVE YOU THE BEST!</span>
+            </div>
+            
+            <h1 className="hero-title">
+              <span className="text-medical">Medical</span> Services<br />
+              That You Can <span className="text-trust">Trust</span>
+            </h1>
 
-          <div className="hero-tagline">
-            <h2>We serve.</h2>
-            <h2>We solve.</h2>
-            <h2>We save.</h2>
-          </div>
+            <p className="hero-description">
+              Need professional help? Our support staff will answer your questions.<br />
+              Visit us Now or Make an Appointment!
+            </p>
 
-          <div className="hero-cta-group">
-            <Link to="/signup" className="btn primary big-btn">Book an Appointment</Link>
-            <div className="play-video">
-              <span className="play-icon">▶</span>
-              <span>Watch Video</span>
+            <div className="hero-cta-group">
+              <Link to="/signup" className="btn primary big-btn">MAKE AN APPOINTMENT</Link>
             </div>
           </div>
-        </div>
-
-        <div className="hero-image-container">
-          <img src={heroImage} alt="Healthcare Technology" className="hero-image" />
         </div>
       </section>
 

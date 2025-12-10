@@ -13,6 +13,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import ContactUs from "./pages/ContactUs";
+import PatientProfile from "./pages/PatientProfile";
+import DoctorProfile from "./pages/DoctorProfile";
 
 function App() {
   const location = useLocation();
@@ -44,6 +46,8 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard/patient" element={<PatientDashboard />} />
             <Route path="/dashboard/doctor" element={<DoctorDashboard />} />
+            <Route path="/profile/patient" element={<PatientProfile />} />
+            <Route path="/profile/doctor" element={<DoctorProfile />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/contact" element={<ContactUs />} />
