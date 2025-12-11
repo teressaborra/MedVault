@@ -7,6 +7,7 @@ public class LoginResponse {
     private String name;
     private Long userId;
     private String identificationId;
+    private String token; // JWT token
 
     public LoginResponse(boolean success, String message, String role, String name, Long userId) {
         this.success = success;
@@ -23,6 +24,16 @@ public class LoginResponse {
         this.name = name;
         this.userId = userId;
         this.identificationId = identificationId;
+    }
+
+    public LoginResponse(boolean success, String message, String role, String name, Long userId, String identificationId, String token) {
+        this.success = success;
+        this.message = message;
+        this.role = role;
+        this.name = name;
+        this.userId = userId;
+        this.identificationId = identificationId;
+        this.token = token;
     }
 
     public boolean isSuccess() {
@@ -47,5 +58,9 @@ public class LoginResponse {
     
     public String getIdentificationId() {
         return identificationId;
+    }
+
+    public String getToken() {
+        return token;
     }
 }

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import mock from "../api/mockBackend";
+import { setToken } from "../api/auth";
 import "./AdminLogin.css";
 
 function AdminLogin() {
@@ -22,6 +23,10 @@ function AdminLogin() {
       });
 
       if (res.data.success) {
+        // Store JWT token
+        if (res.data.token) {
+          setToken(res.data.token);
+        }
         const uid = res.data.userId || res.data.user_id;
         localStorage.setItem('mv_current_user', JSON.stringify({ userId: uid, role: 'ADMIN', name: res.data.name }));
         navigate('/admin');

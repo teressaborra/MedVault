@@ -134,6 +134,7 @@ function PatientDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem('mv_current_user');
+    localStorage.removeItem('mv_jwt_token'); // Clear JWT token
     window.location.href = '/';
   };
 

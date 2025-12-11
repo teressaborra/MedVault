@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import mock from "../api/mockBackend";
+import { setToken } from "../api/auth";
 import "./PatientLogin.css";
 
 function PatientLogin() {
@@ -22,6 +23,10 @@ function PatientLogin() {
       });
 
       if (res.data.success) {
+        // Store JWT token
+        if (res.data.token) {
+          setToken(res.data.token);
+        }
         // if backend indicates first login required it should include that flag
         const first = res.data.firstLoginRequired;
         const uid = res.data.userId || res.data.user_id;

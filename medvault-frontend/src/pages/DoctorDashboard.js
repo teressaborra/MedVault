@@ -117,6 +117,7 @@ function DoctorDashboard() {
           <a>Settings</a>
           <a className="muted" onClick={() => {
             localStorage.removeItem('mv_current_user');
+            localStorage.removeItem('mv_jwt_token');
             window.location.href = '/';
           }}>Logout</a>
         </nav>

@@ -2,6 +2,7 @@ package com.medvault.medvault.controller;
 
 import com.medvault.medvault.dto.LoginRequest;
 import com.medvault.medvault.dto.LoginResponse;
+import com.medvault.medvault.security.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.medvault.medvault.dto.SignupRequest;
@@ -14,9 +15,11 @@ import com.medvault.medvault.service.UserService;
 public class AuthController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/login")
@@ -32,7 +35,11 @@ public class AuthController {
                 String role = user.getRoles();
                 String name = user.getUsername();
                 String identificationId = user.getIdentificationId();
-                return ResponseEntity.ok(new LoginResponse(true, "Login successful", role, name, user.getId(), identificationId));
+                
+                // Generate JWT token
+                String token = jwtUtil.generateToken(email, user.getId(), role, identificationId);
+                
+                return ResponseEntity.ok(new LoginResponse(true, "Login successful", role, name, user.getId(), identificationId, token));
             } else {
                 return ResponseEntity.ok(new LoginResponse(false, "Invalid credentials", null, null, null));
             }

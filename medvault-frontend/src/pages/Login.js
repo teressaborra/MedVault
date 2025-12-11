@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import mock from "../api/mockBackend";
+import { setToken } from "../api/auth";
 import "./Login.css";
 
 function Login() {
@@ -40,12 +41,19 @@ function Login() {
       const res = await axios.post('http://localhost:8080/api/login', { email, password });
       const data = res.data;
       if (!data.success) { setMessage(data.message || 'Login failed'); return; }
+      
+      // Store JWT token
+      if (data.token) {
+        setToken(data.token);
+      }
+      
       // backend should ideally return role and userId
       const role = data.role || data.user?.role || data.userRole;
       const userId = data.userId || data.user?.id || data.user_id;
       const name = data.name || data.user?.name;
+      const identificationId = data.identificationId || '';
       // persist current user for mock/update-password flow
-      localStorage.setItem('mv_current_user', JSON.stringify({ userId, role, name }));
+      localStorage.setItem('mv_current_user', JSON.stringify({ userId, role, name, identificationId }));
       if (data.firstLoginRequired) navigate('/update-password');
       else {
         if (role === 'ADMIN' || role === 'ADMINISTRATIVE') navigate('/admin');

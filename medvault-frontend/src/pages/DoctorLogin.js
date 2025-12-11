@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import mock from "../api/mockBackend";
+import { setToken } from "../api/auth";
 import "./DoctorLogin.css";
 
 function DoctorLogin() {
@@ -22,6 +23,10 @@ function DoctorLogin() {
       });
 
       if (res.data.success) {
+        // Store JWT token
+        if (res.data.token) {
+          setToken(res.data.token);
+        }
         const first = res.data.firstLoginRequired;
         const uid = res.data.userId || res.data.user_id;
         const identificationId = res.data.identificationId || '';
