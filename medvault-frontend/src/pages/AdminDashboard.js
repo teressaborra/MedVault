@@ -303,6 +303,31 @@ function UsersList({ role, reloadKey }) {
                   <div className="detail-row"><strong>State:</strong> {profileData.state || 'N/A'}</div>
                   <div className="detail-row"><strong>Postal Code:</strong> {profileData.postalCode || 'N/A'}</div>
                   <div className="detail-row"><strong>Government ID:</strong> {profileData.governmentIdType || 'N/A'} - {profileData.governmentIdNumber || 'N/A'}</div>
+                  {profileData.documentPath && (
+                    <div className="detail-row document-section">
+                      <strong>Government ID Document:</strong>
+                      <div className="document-preview-admin">
+                        {profileData.documentPath.match(/\.(jpeg|jpg|gif|png|webp)$/i) || profileData.documentPath.includes('cloudinary.com') ? (
+                          <a href={profileData.documentPath} target="_blank" rel="noopener noreferrer">
+                            <img 
+                              src={profileData.documentPath} 
+                              alt="Government ID" 
+                              className="admin-doc-image"
+                            />
+                          </a>
+                        ) : (
+                          <a 
+                            href={profileData.documentPath} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="admin-doc-link"
+                          >
+                            📄 View Document
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className="detail-row"><strong>Medical Conditions:</strong> {profileData.existingConditions || 'None'}</div>
                   <div className="detail-row"><strong>Allergies:</strong> {profileData.allergies || 'None'}</div>
                   <div className="detail-row"><strong>Current Medications:</strong> {profileData.currentMedications || 'None'}</div>
@@ -323,6 +348,31 @@ function UsersList({ role, reloadKey }) {
                   <div className="detail-row"><strong>Clinic/Hospital:</strong> {profileData.clinicHospitalName || 'N/A'}</div>
                   <div className="detail-row"><strong>Consultation Fee:</strong> ₹{profileData.consultationFee || 0}</div>
                   <div className="detail-row"><strong>Availability:</strong> {profileData.availabilitySchedule || 'N/A'}</div>
+                  {profileData.documentPath && (
+                    <div className="detail-row document-section">
+                      <strong>Medical License / Certificate:</strong>
+                      <div className="document-preview-admin">
+                        {profileData.documentPath.match(/\.(jpeg|jpg|gif|png|webp)$/i) || profileData.documentPath.includes('cloudinary.com') ? (
+                          <a href={profileData.documentPath} target="_blank" rel="noopener noreferrer">
+                            <img 
+                              src={profileData.documentPath} 
+                              alt="Medical License" 
+                              className="admin-doc-image"
+                            />
+                          </a>
+                        ) : (
+                          <a 
+                            href={profileData.documentPath} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="admin-doc-link"
+                          >
+                            📄 View Document
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className="detail-row"><strong>Bio:</strong> {profileData.bio || 'N/A'}</div>
                 </div>
               )}

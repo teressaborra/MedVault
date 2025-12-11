@@ -27,6 +27,13 @@ public class UserService {
         } else {
             u.setRoles("USER");
         }
+        
+        // Generate unique identification ID based on role
+        String prefix = "PATIENT".equalsIgnoreCase(role) ? "PID" : 
+                       "DOCTOR".equalsIgnoreCase(role) ? "DID" : "UID";
+        long count = userRepository.countByRoles(role != null ? role.toUpperCase() : "USER");
+        u.setIdentificationId(prefix + "-" + String.format("%05d", count + 1));
+        
         return userRepository.save(u);
     }
 

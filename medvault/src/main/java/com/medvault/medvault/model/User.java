@@ -30,6 +30,9 @@ public class User {
     @Column(name = "first_login_required")
     private Boolean firstLoginRequired = false;
 
+    @Column(name = "identification_id", unique = true)
+    private String identificationId; // PID-xxx for patients, DID-xxx for doctors
+
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 
@@ -65,6 +68,9 @@ public class User {
 
     public Boolean getFirstLoginRequired() { return firstLoginRequired; }
     public void setFirstLoginRequired(Boolean firstLoginRequired) { this.firstLoginRequired = firstLoginRequired; }
+
+    public String getIdentificationId() { return identificationId; }
+    public void setIdentificationId(String identificationId) { this.identificationId = identificationId; }
 
     public String getRoles() { return roles; }
     public void setRoles(String roles) { this.roles = roles; }

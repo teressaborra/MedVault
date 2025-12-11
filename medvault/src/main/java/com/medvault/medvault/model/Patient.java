@@ -62,6 +62,53 @@ public class Patient {
     @Column(name = "current_medications")
     private String currentMedications;
 
+    // Lifestyle Information
+    @Column(name = "smoking_habit")
+    private String smokingHabit; // NEVER, OCCASIONAL, WEEKLY, DAILY
+
+    @Column(name = "alcohol_habit")
+    private String alcoholHabit; // NEVER, OCCASIONAL, WEEKLY, DAILY
+
+    @Column(name = "diet_type")
+    private String dietType; // VEGETARIAN, NON_VEGETARIAN, VEGAN, EGGETARIAN
+
+    @Column(name = "physical_activity")
+    private String physicalActivity; // SEDENTARY, LIGHT, MODERATE, ACTIVE, VERY_ACTIVE
+
+    @Column(name = "sleep_hours")
+    private String sleepHours; // e.g., "6-7", "7-8", "8+"
+
+    @Column(name = "stress_level")
+    private String stressLevel; // LOW, MODERATE, HIGH, VERY_HIGH
+
+    @Column(name = "sleep_quality")
+    private String sleepQuality; // POOR, FAIR, GOOD, EXCELLENT
+
+    // Current Health Data
+    @Column(name = "weight")
+    private Double weight; // in kg
+
+    @Column(name = "height")
+    private Double height; // in cm
+
+    @Column(name = "bmi")
+    private Double bmi;
+
+    @Column(name = "blood_pressure_systolic")
+    private Integer bloodPressureSystolic;
+
+    @Column(name = "blood_pressure_diastolic")
+    private Integer bloodPressureDiastolic;
+
+    @Column(name = "pulse_rate")
+    private Integer pulseRate;
+
+    @Column(name = "temperature")
+    private Double temperature; // in Fahrenheit
+
+    @Column(name = "respiratory_rate")
+    private Integer respiratoryRate;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
@@ -139,6 +186,53 @@ public class Patient {
 
     public String getCurrentMedications() { return currentMedications; }
     public void setCurrentMedications(String currentMedications) { this.currentMedications = currentMedications; }
+
+    // Lifestyle getters and setters
+    public String getSmokingHabit() { return smokingHabit; }
+    public void setSmokingHabit(String smokingHabit) { this.smokingHabit = smokingHabit; }
+
+    public String getAlcoholHabit() { return alcoholHabit; }
+    public void setAlcoholHabit(String alcoholHabit) { this.alcoholHabit = alcoholHabit; }
+
+    public String getDietType() { return dietType; }
+    public void setDietType(String dietType) { this.dietType = dietType; }
+
+    public String getPhysicalActivity() { return physicalActivity; }
+    public void setPhysicalActivity(String physicalActivity) { this.physicalActivity = physicalActivity; }
+
+    public String getSleepHours() { return sleepHours; }
+    public void setSleepHours(String sleepHours) { this.sleepHours = sleepHours; }
+
+    public String getStressLevel() { return stressLevel; }
+    public void setStressLevel(String stressLevel) { this.stressLevel = stressLevel; }
+
+    public String getSleepQuality() { return sleepQuality; }
+    public void setSleepQuality(String sleepQuality) { this.sleepQuality = sleepQuality; }
+
+    // Health data getters and setters
+    public Double getWeight() { return weight; }
+    public void setWeight(Double weight) { this.weight = weight; }
+
+    public Double getHeight() { return height; }
+    public void setHeight(Double height) { this.height = height; }
+
+    public Double getBmi() { return bmi; }
+    public void setBmi(Double bmi) { this.bmi = bmi; }
+
+    public Integer getBloodPressureSystolic() { return bloodPressureSystolic; }
+    public void setBloodPressureSystolic(Integer bloodPressureSystolic) { this.bloodPressureSystolic = bloodPressureSystolic; }
+
+    public Integer getBloodPressureDiastolic() { return bloodPressureDiastolic; }
+    public void setBloodPressureDiastolic(Integer bloodPressureDiastolic) { this.bloodPressureDiastolic = bloodPressureDiastolic; }
+
+    public Integer getPulseRate() { return pulseRate; }
+    public void setPulseRate(Integer pulseRate) { this.pulseRate = pulseRate; }
+
+    public Double getTemperature() { return temperature; }
+    public void setTemperature(Double temperature) { this.temperature = temperature; }
+
+    public Integer getRespiratoryRate() { return respiratoryRate; }
+    public void setRespiratoryRate(Integer respiratoryRate) { this.respiratoryRate = respiratoryRate; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

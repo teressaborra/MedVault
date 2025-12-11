@@ -1,0 +1,213 @@
+.image-upload-container {
+  margin-bottom: 1.5rem;
+}
+
+.upload-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.upload-area {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  transition: all 0.3s ease;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-area:hover {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.upload-placeholder {
+  text-align: center;
+  cursor: pointer;
+  width: 100%;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.upload-text {
+  color: #3b82f6;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.upload-help-text {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.upload-progress {
+  text-align: center;
+  width: 100%;
+}
+
+.progress-spinner {
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #3b82f6;
+  transition: width 0.3s ease;
+}
+
+.preview-container {
+  width: 100%;
+  text-align: center;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pdf-preview,
+.document-preview {
+  text-align: center;
+  padding: 2rem;
+}
+
+.pdf-icon,
+.doc-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.view-pdf-link,
+.view-doc-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.view-pdf-link:hover,
+.view-doc-link:hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.btn-change,
+.btn-remove {
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-change {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-change:hover {
+  background-color: #2563eb;
+}
+
+.btn-remove {
+  background-color: #ef4444;
+  color: white;
+}
+
+.btn-remove:hover {
+  background-color: #dc2626;
+}
+
+.upload-error {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 6px;
+  color: #c33;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.upload-success {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: #d1fae5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  color: #065f46;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .upload-label {
+    color: #e5e7eb;
+  }
+
+  .upload-area {
+    border-color: #4b5563;
+    background-color: #1f2937;
+  }
+
+  .upload-area:hover {
+    border-color: #3b82f6;
+    background-color: #1e3a5f;
+  }
+
+  .upload-help-text {
+    color: #9ca3af;
+  }
+}

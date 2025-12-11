@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './DoctorProfile.css';
+import ImageUpload from '../components/ImageUpload';
 
 function DoctorProfile() {
   const navigate = useNavigate();
@@ -82,6 +83,10 @@ function DoctorProfile() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleDocumentUpload = (url) => {
+    setFormData(prev => ({ ...prev, documentPath: url }));
   };
 
   const handleSubmit = async (e) => {
@@ -345,15 +350,12 @@ function DoctorProfile() {
           <h2>License & Certificates</h2>
           <div className="form-row">
             <div className="form-group full-width">
-              <label>Document Upload Path (Optional)</label>
-              <input
-                type="text"
-                name="documentPath"
-                value={formData.documentPath}
-                onChange={handleChange}
-                placeholder="Document URL or file path for license/certificates"
+              <ImageUpload
+                label="Medical License / Degree Certificate Upload *"
+                currentImage={formData.documentPath}
+                onUploadComplete={handleDocumentUpload}
+                helpText="Upload your medical license, degree certificate, or registration document - Max 10MB"
               />
-              <small className="help-text">For now, enter a file path or URL. File upload coming soon.</small>
             </div>
           </div>
         </div>

@@ -24,7 +24,8 @@ function DoctorLogin() {
       if (res.data.success) {
         const first = res.data.firstLoginRequired;
         const uid = res.data.userId || res.data.user_id;
-        localStorage.setItem('mv_current_user', JSON.stringify({ userId: uid, role: 'DOCTOR', name: res.data.name }));
+        const identificationId = res.data.identificationId || '';
+        localStorage.setItem('mv_current_user', JSON.stringify({ userId: uid, role: 'DOCTOR', name: res.data.name, identificationId }));
         if (first) navigate('/update-password');
         else navigate('/dashboard/doctor');
       } else {
@@ -36,7 +37,7 @@ function DoctorLogin() {
         if (r.success) {
           setName(r.name || '');
           setMessage(r.message);
-          localStorage.setItem('mv_current_user', JSON.stringify({ userId: r.userId, role: 'DOCTOR', name: r.name }));
+          localStorage.setItem('mv_current_user', JSON.stringify({ userId: r.userId, role: 'DOCTOR', name: r.name, identificationId: r.identificationId || '' }));
           if (r.firstLoginRequired) navigate('/update-password');
           else navigate('/dashboard/doctor');
         } else {

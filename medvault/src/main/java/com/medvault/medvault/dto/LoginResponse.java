@@ -6,6 +6,7 @@ public class LoginResponse {
     private String role;
     private String name;
     private Long userId;
+    private String identificationId;
 
     public LoginResponse(boolean success, String message, String role, String name, Long userId) {
         this.success = success;
@@ -13,6 +14,15 @@ public class LoginResponse {
         this.role = role;
         this.name = name;
         this.userId = userId;
+    }
+    
+    public LoginResponse(boolean success, String message, String role, String name, Long userId, String identificationId) {
+        this.success = success;
+        this.message = message;
+        this.role = role;
+        this.name = name;
+        this.userId = userId;
+        this.identificationId = identificationId;
     }
 
     public boolean isSuccess() {
@@ -33,5 +43,9 @@ public class LoginResponse {
 
     public Long getUserId() {
         return userId;
+    }
+    
+    public String getIdentificationId() {
+        return identificationId;
     }
 }

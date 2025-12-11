@@ -31,7 +31,8 @@ public class AuthController {
             if (userService.checkPassword(user, password)) {
                 String role = user.getRoles();
                 String name = user.getUsername();
-                return ResponseEntity.ok(new LoginResponse(true, "Login successful", role, name, user.getId()));
+                String identificationId = user.getIdentificationId();
+                return ResponseEntity.ok(new LoginResponse(true, "Login successful", role, name, user.getId(), identificationId));
             } else {
                 return ResponseEntity.ok(new LoginResponse(false, "Invalid credentials", null, null, null));
             }
@@ -90,6 +91,22 @@ public class AuthController {
 
         String msg = "Signup submitted successfully. Admin will review and approve your account.";
         return ResponseEntity.ok(new SignupResponse(true, msg));
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getUserById(@PathVariable Long userId) {
+        var userOpt = userService.findById(userId);
+        if (userOpt.isPresent()) {
+            var user = userOpt.get();
+            return ResponseEntity.ok(new java.util.HashMap<String, Object>() {{
+                put("id", user.getId());
+                put("username", user.getUsername());
+                put("email", user.getEmail());
+                put("roles", user.getRoles());
+                put("identificationId", user.getIdentificationId());
+            }});
+        }
+        return ResponseEntity.notFound().build();
     }
 
 }

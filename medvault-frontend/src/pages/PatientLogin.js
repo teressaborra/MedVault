@@ -26,8 +26,9 @@ function PatientLogin() {
         const first = res.data.firstLoginRequired;
         const uid = res.data.userId || res.data.user_id;
         const nameResp = res.data.name;
+        const identificationId = res.data.identificationId;
         // persist current user for mock/update-password flow
-        localStorage.setItem('mv_current_user', JSON.stringify({ userId: uid, role: 'PATIENT', name: nameResp }));
+        localStorage.setItem('mv_current_user', JSON.stringify({ userId: uid, role: 'PATIENT', name: nameResp, identificationId }));
         if(first){
           navigate('/update-password');
         } else {

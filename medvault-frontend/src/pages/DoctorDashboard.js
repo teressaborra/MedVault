@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./Dashboard.css";
+import ImageUpload from "../components/ImageUpload";
 
 function DoctorDashboard() {
   const [today, setToday] = useState([]);
@@ -90,6 +91,11 @@ function DoctorDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDocumentUpload = (imageUrl) => {
+    setFormData(prev => ({ ...prev, documentPath: imageUrl }));
+    setMessage('Document uploaded successfully! Remember to save your profile.');
   };
 
   const stats = {
@@ -313,6 +319,14 @@ function DoctorDashboard() {
                       <label>License Number *</label>
                       <input type="text" name="licenseNumber" value={formData.licenseNumber || ''} onChange={handleChange} required />
                     </div>
+                  </div>
+                  <div style={{ marginTop: '1rem' }}>
+                    <label>Upload Medical License/Certificate</label>
+                    <ImageUpload 
+                      onUpload={handleDocumentUpload}
+                      existingImage={formData.documentPath}
+                      folder="doctor_documents"
+                    />
                   </div>
                 </div>
 

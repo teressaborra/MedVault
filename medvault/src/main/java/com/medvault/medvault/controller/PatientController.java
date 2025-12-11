@@ -70,6 +70,29 @@ public class PatientController {
             patient.setExistingConditions(request.getExistingConditions());
             patient.setAllergies(request.getAllergies());
             patient.setCurrentMedications(request.getCurrentMedications());
+            
+            // Lifestyle Information
+            patient.setSmokingHabit(request.getSmokingHabit());
+            patient.setAlcoholHabit(request.getAlcoholHabit());
+            patient.setDietType(request.getDietType());
+            patient.setPhysicalActivity(request.getPhysicalActivity());
+            patient.setSleepHours(request.getSleepHours());
+            patient.setStressLevel(request.getStressLevel());
+            patient.setSleepQuality(request.getSleepQuality());
+            
+            // Current Health Data
+            patient.setWeight(request.getWeight());
+            patient.setHeight(request.getHeight());
+            if (request.getWeight() != null && request.getHeight() != null && request.getHeight() > 0) {
+                double heightInMeters = request.getHeight() / 100.0;
+                double bmi = request.getWeight() / (heightInMeters * heightInMeters);
+                patient.setBmi(Math.round(bmi * 10.0) / 10.0);
+            }
+            patient.setBloodPressureSystolic(request.getBloodPressureSystolic());
+            patient.setBloodPressureDiastolic(request.getBloodPressureDiastolic());
+            patient.setPulseRate(request.getPulseRate());
+            patient.setTemperature(request.getTemperature());
+            patient.setRespiratoryRate(request.getRespiratoryRate());
 
             Patient savedPatient = patientService.createOrUpdatePatient(patient);
             return ResponseEntity.ok(new ApiResponse(true, "Profile saved successfully", savedPatient));
@@ -123,6 +146,24 @@ public class PatientController {
         private String existingConditions;
         private String allergies;
         private String currentMedications;
+        
+        // Lifestyle Information
+        private String smokingHabit;
+        private String alcoholHabit;
+        private String dietType;
+        private String physicalActivity;
+        private String sleepHours;
+        private String stressLevel;
+        private String sleepQuality;
+        
+        // Current Health Data
+        private Double weight;
+        private Double height;
+        private Integer bloodPressureSystolic;
+        private Integer bloodPressureDiastolic;
+        private Integer pulseRate;
+        private Double temperature;
+        private Integer respiratoryRate;
 
         // Getters and Setters
         public Long getUserId() { return userId; }
@@ -178,6 +219,50 @@ public class PatientController {
 
         public String getCurrentMedications() { return currentMedications; }
         public void setCurrentMedications(String currentMedications) { this.currentMedications = currentMedications; }
+        
+        // Lifestyle getters and setters
+        public String getSmokingHabit() { return smokingHabit; }
+        public void setSmokingHabit(String smokingHabit) { this.smokingHabit = smokingHabit; }
+        
+        public String getAlcoholHabit() { return alcoholHabit; }
+        public void setAlcoholHabit(String alcoholHabit) { this.alcoholHabit = alcoholHabit; }
+        
+        public String getDietType() { return dietType; }
+        public void setDietType(String dietType) { this.dietType = dietType; }
+        
+        public String getPhysicalActivity() { return physicalActivity; }
+        public void setPhysicalActivity(String physicalActivity) { this.physicalActivity = physicalActivity; }
+        
+        public String getSleepHours() { return sleepHours; }
+        public void setSleepHours(String sleepHours) { this.sleepHours = sleepHours; }
+        
+        public String getStressLevel() { return stressLevel; }
+        public void setStressLevel(String stressLevel) { this.stressLevel = stressLevel; }
+        
+        public String getSleepQuality() { return sleepQuality; }
+        public void setSleepQuality(String sleepQuality) { this.sleepQuality = sleepQuality; }
+        
+        // Health data getters and setters
+        public Double getWeight() { return weight; }
+        public void setWeight(Double weight) { this.weight = weight; }
+        
+        public Double getHeight() { return height; }
+        public void setHeight(Double height) { this.height = height; }
+        
+        public Integer getBloodPressureSystolic() { return bloodPressureSystolic; }
+        public void setBloodPressureSystolic(Integer bloodPressureSystolic) { this.bloodPressureSystolic = bloodPressureSystolic; }
+        
+        public Integer getBloodPressureDiastolic() { return bloodPressureDiastolic; }
+        public void setBloodPressureDiastolic(Integer bloodPressureDiastolic) { this.bloodPressureDiastolic = bloodPressureDiastolic; }
+        
+        public Integer getPulseRate() { return pulseRate; }
+        public void setPulseRate(Integer pulseRate) { this.pulseRate = pulseRate; }
+        
+        public Double getTemperature() { return temperature; }
+        public void setTemperature(Double temperature) { this.temperature = temperature; }
+        
+        public Integer getRespiratoryRate() { return respiratoryRate; }
+        public void setRespiratoryRate(Integer respiratoryRate) { this.respiratoryRate = respiratoryRate; }
     }
 
     static class ApiResponse {
