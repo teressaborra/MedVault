@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import "./Signup.css";
+import "./Home.css";
 import mock from "../api/mockBackend";
 import signupHero from "../assets/signup-hero.png";
 
@@ -85,7 +87,23 @@ function Signup() {
 
 
   return (
-    <div className="signup-page container">
+    <div className="signup-page">
+      {/* Navbar */}
+      <header className="home-header">
+        <div className="home-brand">
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <span className="brand-name">MedVault</span>
+            <span className="brand-sub">Healthcare & Appointments</span>
+          </Link>
+        </div>
+        <nav className="home-nav">
+          <Link to="/" className="nav-link">Home</Link>
+          <Link to="/contact" className="nav-link">Contact Us</Link>
+          <Link to="/login" className="auth-link login">Login</Link>
+          <Link to="/signup" className="nav-link active">Sign up</Link>
+        </nav>
+      </header>
+
       <div className="signup-card">
         <div className="signup-inner">
           <div className="panel-left">

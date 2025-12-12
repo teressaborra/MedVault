@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import './ContactUs.css';
+import './Home.css';
 
 function ContactUs(){
   const [name,setName] = useState('');
@@ -22,7 +24,23 @@ function ContactUs(){
   }
 
   return (
-    <div className="contact-page container">
+    <div className="contact-page">
+      {/* Navbar */}
+      <header className="home-header">
+        <div className="home-brand">
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <span className="brand-name">MedVault</span>
+            <span className="brand-sub">Healthcare & Appointments</span>
+          </Link>
+        </div>
+        <nav className="home-nav">
+          <Link to="/" className="nav-link">Home</Link>
+          <Link to="/contact" className="nav-link active">Contact Us</Link>
+          <Link to="/login" className="auth-link login">Login</Link>
+          <Link to="/signup" className="auth-link signup">Sign up</Link>
+        </nav>
+      </header>
+
       <div className="contact-hero">
         <h1>Contact Us</h1>
         <p className="muted">We’d love to hear from you. Send us a message and we’ll get back shortly.</p>

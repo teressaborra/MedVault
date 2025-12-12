@@ -86,7 +86,23 @@ function Login() {
   }
 
   return (
-    <div className="login-page container">
+    <div className="login-page">
+      {/* Navbar */}
+      <header className="home-header">
+        <div className="home-brand">
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <span className="brand-name">MedVault</span>
+            <span className="brand-sub">Healthcare & Appointments</span>
+          </Link>
+        </div>
+        <nav className="home-nav">
+          <Link to="/" className="nav-link">Home</Link>
+          <Link to="/contact" className="nav-link">Contact Us</Link>
+          <Link to="/login" className="nav-link active">Login</Link>
+          <Link to="/signup" className="nav-link">Sign up</Link>
+        </nav>
+      </header>
+
       <div className="login-card">
         <h1>Login</h1>
         <p className="muted">Sign in with your email and password.</p>

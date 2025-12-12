@@ -1,55 +1,76 @@
+/* ========================================
+   DOCTOR PROFILE - Premium Design
+   ======================================== */
 .doctor-profile-container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
-  background-color: #f9f9f9;
+  padding: 32px 20px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .profile-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
 .profile-header h1 {
   font-size: 28px;
-  color: #333;
+  color: var(--text);
   margin-bottom: 8px;
+  font-weight: 700;
 }
 
 .profile-subtitle {
-  color: #666;
-  font-size: 14px;
+  color: var(--muted);
+  font-size: 15px;
 }
 
 .profile-form {
-  background: white;
-  border-radius: 8px;
-  padding: 30px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-2);
+  border: 1px solid var(--border);
 }
 
 .form-section {
-  margin-bottom: 35px;
-  padding-bottom: 25px;
-  border-bottom: 1px solid #eee;
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
 }
 
 .form-section:last-of-type {
   border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .form-section h2 {
   font-size: 18px;
-  color: #2c3e50;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #27ae60;
+  color: var(--text);
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid var(--success);
+  display: inline-block;
+  font-weight: 700;
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
 .form-row {
   display: flex;
-  gap: 15px;
-  margin-bottom: 15px;
+  gap: 20px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
@@ -66,98 +87,115 @@
 
 .form-group label {
   font-size: 14px;
-  font-weight: 500;
-  color: #555;
-  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
   font-size: 14px;
-  transition: border-color 0.3s;
+  transition: all 0.3s ease;
+  background: #ffffff;
+  color: var(--text);
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+  border-color: var(--success);
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #27ae60;
-  box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.1);
+  border-color: var(--success);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
 }
 
 .form-group textarea {
   resize: vertical;
-  font-family: inherit;
+  font-family: 'Inter', sans-serif;
+  min-height: 100px;
 }
 
 .help-text {
   font-size: 12px;
-  color: #999;
-  margin-top: 4px;
+  color: var(--muted);
+  margin-top: 6px;
 }
 
 .message {
-  padding: 12px 16px;
-  border-radius: 4px;
-  margin-bottom: 20px;
+  padding: 14px 20px;
+  border-radius: var(--radius);
+  margin-bottom: 24px;
   font-size: 14px;
   text-align: center;
+  font-weight: 500;
 }
 
 .message.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: var(--success-light);
+  color: #065f46;
+  border: 1px solid #a7f3d0;
 }
 
 .message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: var(--danger-light);
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 
 .form-actions {
   display: flex;
   justify-content: center;
-  padding-top: 20px;
+  padding-top: 24px;
 }
 
 .btn-save {
-  padding: 12px 40px;
-  background-color: #27ae60;
-  color: white;
+  padding: 14px 48px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 500;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
 }
 
 .btn-save:hover {
-  background-color: #229954;
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
 }
 
 .btn-save:disabled {
-  background-color: #95a5a6;
+  background: var(--bg-secondary);
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  color: var(--muted);
 }
 
 @media (max-width: 768px) {
   .doctor-profile-container {
-    padding: 10px;
+    padding: 16px;
   }
 
   .profile-form {
-    padding: 20px;
+    padding: 24px 20px;
   }
 
   .form-row {
     flex-direction: column;
+    gap: 16px;
   }
 
   .form-group {

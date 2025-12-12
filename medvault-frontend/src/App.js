@@ -20,10 +20,11 @@ function App() {
   const location = useLocation();
   const isHomePage = location.pathname === "/";
   const isDashboard = location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/admin");
+  const isPublicPage = ["/login", "/signup", "/contact", "/login/patient", "/login/doctor", "/login/admin"].includes(location.pathname);
 
   return (
     <div>
-      {!isHomePage && !isDashboard && (
+      {!isHomePage && !isDashboard && !isPublicPage && (
         <header className="app-header">
           <div className="header-left">
             <h2 className="brand">MedVault</h2>
@@ -39,8 +40,8 @@ function App() {
         </header>
       )}
 
-      <main className={isHomePage ? "home-main" : "app-main"}>
-        <div className={isHomePage || isDashboard ? "" : "container"}>
+      <main className={isHomePage || isPublicPage ? "home-main" : "app-main"}>
+        <div className={isHomePage || isDashboard || isPublicPage ? "" : "container"}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/signup" element={<Signup />} />

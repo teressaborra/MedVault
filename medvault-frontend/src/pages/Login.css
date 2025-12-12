@@ -1,44 +1,90 @@
-/* Simple styles for Login selection */
+/* ========================================
+   LOGIN PAGE - Premium Design
+   ======================================== */
 .login-page {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 100px);
+  min-height: 100vh;
+  padding: 100px 20px 40px;
+  background: linear-gradient(135deg, var(--bg) 0%, #e0e8f0 100%);
+  position: relative;
+}
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(0, 136, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.login-page .home-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 .login-page h1 {
-  margin-top: 6px;
+  margin: 0 0 8px 0;
+  font-size: 28px;
   color: var(--text);
+  font-weight: 700;
 }
 
 .muted {
   color: var(--muted);
-  margin-bottom: 14px;
+  margin-bottom: 24px;
+  font-size: 15px;
 }
 
 .login-card {
+  position: relative;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 40px;
   text-decoration: none;
   color: var(--text);
-  border: 1px solid #d1d9e0;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(0, 136, 255, 0.1);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 136, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: slideUp 0.5s ease-out;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--brand-gradient);
 }
 
 .login-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+  transform: translateY(-8px);
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 25px 50px -12px rgba(0, 136, 255, 0.15);
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -47,37 +93,46 @@
 }
 
 .login-card h3 {
-  margin: 0 0 6px 0;
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: var(--text);
 }
 
 .login-card p {
   margin: 0;
   color: var(--muted);
   font-size: 14px;
+  line-height: 1.5;
 }
 
+/* Form Labels */
 label {
   display: block;
-  margin-bottom: 6px;
-  font-weight: 500;
+  margin-bottom: 8px;
+  font-weight: 600;
   font-size: 14px;
   color: var(--text);
 }
 
+/* Form Inputs */
 input {
   width: 100%;
   box-sizing: border-box;
-  padding: 12px 16px;
-  border: 2px solid #d1d9e0;
-  border-radius: 8px;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
   font-size: 15px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: #ffffff;
+  color: var(--text);
+}
+
+input:hover {
+  border-color: var(--brand-light);
 }
 
 input:focus {
   outline: none;
-  border-color: #0088ff;
-  box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.1);
-  transform: translateY(-1px);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px rgba(0, 136, 255, 0.1);
 }
