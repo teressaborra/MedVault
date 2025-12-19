@@ -39,13 +39,14 @@
 }
 
 .hero-left {
-	flex: 0 0 56%;
+	flex: 1 1 60%;
 }
 
 .hero-right {
-	flex: 0 0 40%;
+	flex: 0 0 auto;
 	display: flex;
 	justify-content: flex-end;
+	min-width: 0;
 }
 
 .crumbs {
@@ -83,7 +84,24 @@
 	color: var(--text);
 	border: 1px solid var(--border);
 	box-shadow: var(--shadow-1);
+	flex-wrap: wrap;
 }
+
+.hero-card {
+	background: linear-gradient(180deg,#ffffff,#f8fbff);
+	border-radius: 12px;
+	padding: 20px;
+	width: 100%;
+	max-width: 320px;
+	box-shadow: 0 12px 30px rgba(2,6,23,0.06);
+	border: 1px solid rgba(2,6,23,0.04);
+}
+
+.hero-card h3 { margin: 0 0 8px; }
+
+.avatar-img { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; }
+
+.doctor-card .avatar { border-radius: 12px; overflow: hidden; }
 
 .search-left,
 .search-mid {
@@ -123,7 +141,7 @@
 	padding: 14px 16px;
 	border-radius: var(--radius);
 	border: 2px solid var(--border);
-	min-width: 320px;
+	min-width: 200px;
 	background: #ffffff;
 	color: var(--text);
 	font-size: 14px;
@@ -173,6 +191,157 @@
 	margin: 0 0 12px;
 	color: var(--text);
 	font-weight: 700;
+}
+
+.doctors-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 16px;
+	margin-top: 12px;
+}
+
+.doctor-card {
+	background: linear-gradient(180deg, #ffffff, #fbfdff);
+	border: 1px solid rgba(15,23,42,0.04);
+	padding: 16px;
+	border-radius: 12px;
+	box-shadow: 0 6px 18px rgba(16,24,40,0.04);
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+}
+
+.doctor-name {
+	font-weight: 800;
+	font-size: 16px;
+	color: var(--text);
+}
+
+.doctor-spec {
+	font-size: 13px;
+	color: var(--muted);
+}
+
+.card-badge {
+	background: linear-gradient(90deg, #06b6d4, #3b82f6);
+	color: white;
+	padding: 6px 10px;
+	border-radius: 999px;
+	font-weight: 700;
+	font-size: 13px;
+}
+
+.card-meta {
+	color: var(--muted);
+	margin-top: 8px;
+}
+
+.card-actions {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 12px;
+}
+
+.modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(2,6,23,0.6);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 9999;
+}
+
+.modal-popup {
+	background: white;
+	border-radius: 12px;
+	padding: 20px;
+	width: 95%;
+	max-width: 900px;
+	box-shadow: 0 12px 40px rgba(2,6,23,0.2);
+}
+
+.avatar {
+	width: 52px;
+	height: 52px;
+	border-radius: 12px;
+	background: linear-gradient(90deg,#06b6d4,#3b82f6);
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 800;
+	font-size: 16px;
+}
+
+.doctor-rating {
+	background: rgba(59,130,246,0.08);
+	color: #1e3a8a;
+	padding: 6px 10px;
+	border-radius: 8px;
+	font-weight: 700;
+	font-size: 13px;
+}
+
+.slot-chip {
+	background: linear-gradient(180deg,#fff,#f6fbff);
+	border: 1px solid rgba(59,130,246,0.12);
+	padding: 10px 12px;
+	border-radius: 10px;
+	cursor: pointer;
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	min-width: 110px;
+	box-shadow: 0 6px 18px rgba(59,130,246,0.04);
+}
+
+.slot-chip:hover { transform: translateY(-3px); }
+
+.doctor-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(2,6,23,0.08); }
+.doctor-card { transition: all 0.18s ease; }
+
+/* Table layout for a tighter professional list */
+.doctors-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 8px;
+	background: white;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 12px 30px rgba(2,6,23,0.03);
+}
+.doctors-table thead th {
+	text-align: left;
+	padding: 14px 16px;
+	background: linear-gradient(90deg,#fbfdff,#f7fbff);
+	font-weight: 700;
+	font-size: 14px;
+	color: var(--text);
+	border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.doctors-table tbody td {
+	padding: 12px 16px;
+	border-bottom: 1px solid rgba(0,0,0,0.04);
+	vertical-align: middle;
+}
+.doctor-cell { display: flex; align-items: center; }
+.doctors-table tr:hover td { background: rgba(59,130,246,0.02); }
+
+@media (max-width: 880px) {
+	.doctors-table { display: block; }
+	.doctors-table thead { display: none; }
+	.doctors-table tbody td { display: block; width: 100%; box-sizing: border-box; }
+	.doctors-table tbody tr { display: block; margin-bottom: 12px; background: white; border-radius: 10px; box-shadow: 0 8px 20px rgba(2,6,23,0.04); overflow: hidden; }
+	.doctor-cell { padding: 12px 16px; }
 }
 
 @media (max-width: 880px) {
