@@ -85,47 +85,130 @@ function Login() {
     }
   }
 
-  return (
-    <div className="login-page">
-      {/* Navbar */}
-      <header className="home-header">
-        <div className="home-brand">
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <span className="brand-name">MedVault</span>
-            <span className="brand-sub">Healthcare & Appointments</span>
-          </Link>
-        </div>
-        <nav className="home-nav">
-          <Link to="/" className="nav-link">Home</Link>
-          <Link to="/contact" className="nav-link">Contact Us</Link>
-          <Link to="/login" className="nav-link active">Login</Link>
-          <Link to="/signup" className="nav-link">Sign up</Link>
-        </nav>
-      </header>
+  // return (
+  //   <div className="login-page">
+  //     {/* Navbar */}
+  //     <header className="home-header">
+  //       <div className="home-brand">
+  //         <Link to="/" style={{ textDecoration: 'none' }}>
+  //           <span className="brand-name">MedVault</span>
+  //           <span className="brand-sub">Healthcare & Appointments</span>
+  //         </Link>
+  //       </div>
+  //       <nav className="home-nav">
+  //         <Link to="/" className="nav-link">Home</Link>
+  //         <Link to="/contact" className="nav-link">Contact Us</Link>
+  //         <Link to="/login" className="nav-link active">Login</Link>
+  //         <Link to="/signup" className="nav-link">Sign up</Link>
+  //       </nav>
+  //     </header>
 
-      <div className="login-card">
-        <h1>Login</h1>
-        <p className="muted">Sign in with your email and password.</p>
+  //     <div className="login-card">
+  //       <h1>Login</h1>
+  //       <p className="muted">Sign in with your email and password.</p>
 
-        <form onSubmit={handleSubmit} style={{ marginTop: 12 }}>
-          <div style={{ marginBottom: 10 }}>
-            <label>Email: <input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
+  //       <form onSubmit={handleSubmit} style={{ marginTop: 12 }}>
+  //         <div style={{ marginBottom: 10 }}>
+  //           <label>Email: <input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
+  //         </div>
+  //         <div style={{ marginBottom: 10 }}>
+  //           <label>Password: <input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
+  //         </div>
+  //         <div style={{ display: 'flex', gap: 8 }}>
+  //           <button className="btn primary" type="submit">Login</button>
+  //           <Link to="/signup" className="btn outline" style={{ textDecoration: 'none' }}>Create account</Link>
+  //         </div>
+  //       </form>
+
+  //       {message && <p style={{ marginTop: 12, color: '#b91c1c' }}>{message}</p>}
+
+  //       <p style={{ marginTop: 12 }}><Link to="/">Back to Home</Link></p>
+  //     </div>
+  //   </div>
+  // );
+return (
+  <div className="login-page">
+    {/* Navbar */}
+    <header className="home-header">
+      <div className="home-brand">
+        <Link to="/" style={{ textDecoration: "none" }}>
+          <span className="brand-name">MedVault</span>
+          <span className="brand-sub">Healthcare & Appointments</span>
+        </Link>
+      </div>
+      <nav className="home-nav">
+        <Link to="/" className="nav-link">Home</Link>
+        <Link to="/contact" className="nav-link">Contact Us</Link>
+        <Link to="/login" className="nav-link active">Login</Link>
+        <Link to="/signup" className="nav-link">Sign Up</Link>
+      </nav>
+    </header>
+
+    {/* Login Section */}
+    <div className="login-container">
+      
+      {/* Left: Login Form */}
+      <div className="login-form-section">
+        <h1>Welcome Back 👋</h1>
+        <p className="muted">
+          Login to manage appointments and medical records
+        </p>
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
           </div>
-          <div style={{ marginBottom: 10 }}>
-            <label>Password: <input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
+
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn primary" type="submit">Login</button>
-            <Link to="/signup" className="btn outline" style={{ textDecoration: 'none' }}>Create account</Link>
-          </div>
+
+          <button className="btn primary full" type="submit">
+            Login
+          </button>
         </form>
 
-        {message && <p style={{ marginTop: 12, color: '#b91c1c' }}>{message}</p>}
+        {message && <p className="error-text">{message}</p>}
 
-        <p style={{ marginTop: 12 }}><Link to="/">Back to Home</Link></p>
+        <p className="signup-text">
+          Don't have an account? <Link to="/signup">Create one</Link>
+        </p>
       </div>
+
+      {/* Right: Image Section */}
+      {/* <div className="login-image-section">
+        <img
+          src={require("../assets/login-hospital.png")}
+          alt="Hospital Login"
+        />
+      </div> */}
+      {/* Right: Image Section */}
+      <div className="login-image-section">
+        <img
+          src="https://img.freepik.com/free-vector/doctor-patient-illustration_23-2148856559.jpg"
+          alt="Hospital Management System"
+        />
+      </div>
+
+
     </div>
-  );
+  </div>
+);
+
 }
 
 export default Login;

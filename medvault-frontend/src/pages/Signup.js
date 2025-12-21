@@ -106,7 +106,7 @@ function Signup() {
 
       <div className="signup-card">
         <div className="signup-inner">
-          <div className="panel-left">
+          {/* <div className="panel-left">
             <h1>WELCOME TO MEDVAULT</h1>
             <h4>Join us and manage your health records securely </h4>
 
@@ -130,19 +130,72 @@ function Signup() {
             <div className="signup-image-container">
               <img src={signupHero} alt="Healthcare Professional" className="signup-hero-img" />
             </div>
+          </div> */}
+          <div className="panel-left">
+            <div className="left-content">
+                    
+              <span className="left-badge">Trusted Healthcare Platform</span>
+                    
+              <h1>
+                Manage Your <span>Health</span><br />
+                Smarter & Faster
+              </h1>
+                    
+              <p className="left-desc">
+                MedVault helps patients and doctors manage appointments, medical
+                records, and care workflows securely in one place.
+              </p>
+                    
+              <div className="left-stats">
+                <div>
+                  <h3>10k+</h3>
+                  <p>Patients</p>
+                </div>
+                <div>
+                  <h3>500+</h3>
+                  <p>Doctors</p>
+                </div>
+                <div>
+                  <h3>99.9%</h3>
+                  <p>Uptime</p>
+                </div>
+              </div>
+                    
+              <div className="left-image-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1576091160550-2173dba999ef"
+                  alt="Healthcare Platform"
+                />
+              </div>
+                    
+            </div>
           </div>
+
+
 
           <div className="panel-right">
             <form onSubmit={handleSubmit} className="signup-form" noValidate>
               {error && <div className="alert error">{error}</div>}
               {success && <div className="alert success">{success}</div>}
 
-              <div className="row form-row">
+              {/* <div className="row form-row">
                 <label htmlFor="role">Account type</label>
                 <select id="role" value={role} onChange={(e) => setRole(e.target.value)}>
                   <option value="patient">Patient</option>
                   <option value="doctor">Doctor</option>
                 </select>
+              </div> */}
+              <div className="role-toggle">
+                <button
+                  className={role === "patient" ? "active" : ""}
+                  onClick={() => setRole("patient")}
+                  type="button"
+                >Patient</button>
+                <button
+                  className={role === "doctor" ? "active" : ""}
+                  onClick={() => setRole("doctor")}
+                  type="button"
+                >Doctor</button>
               </div>
 
               <div className="row form-row">
