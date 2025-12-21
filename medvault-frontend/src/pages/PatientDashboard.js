@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./Dashboard.css";
 import ImageUpload from "../components/ImageUpload";
+import Appointments from "./Appointments";
+import Dialog from '../components/Dialog';
 
 function PatientDashboard() {
   const [user, setUser] = useState(null);
@@ -11,6 +13,7 @@ function PatientDashboard() {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [dialog, setDialog] = useState(null);
   
   // Health Records state
   const [healthRecordsTab, setHealthRecordsTab] = useState('demographics');
@@ -183,23 +186,27 @@ function PatientDashboard() {
   };
 
   const handleDeleteDocument = async (docId) => {
-    if (!window.confirm('Are you sure you want to delete this document?')) return;
-    
-    try {
-      const response = await fetch(`http://localhost:8080/api/health-documents/${docId}`, {
-        method: 'DELETE'
-      });
-      
-      const data = await response.json();
-      if (data.success) {
-        setMessage('Document deleted successfully!');
-        fetchHealthDocuments();
-      } else {
-        setMessage('Error: ' + data.message);
+    setDialog({
+      type: 'confirm',
+      title: 'Delete document',
+      message: 'Are you sure you want to delete this document?',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`http://localhost:8080/api/health-documents/${docId}`, {
+            method: 'DELETE'
+          });
+          const data = await response.json();
+          if (data.success) {
+            setMessage('Document deleted successfully!');
+            fetchHealthDocuments();
+          } else {
+            setMessage('Error: ' + data.message);
+          }
+        } catch (error) {
+          setMessage('Error deleting document.');
+        }
       }
-    } catch (error) {
-      setMessage('Error deleting document.');
-    }
+    });
   };
 
   // Calculate age from DOB
@@ -221,7 +228,7 @@ function PatientDashboard() {
         <h2 className="nav-brand">MedVault</h2>
         <nav className="nav-list">
           <a href="#dashboard" className={activeView === 'dashboard' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveView('dashboard'); }}>Dashboard</a>
-          <a href="/appointments">Appointments</a>
+          <a href="#appointments" onClick={(e) => { e.preventDefault(); setActiveView('appointments'); }} className={activeView === 'appointments' ? 'active' : ''}>Book an Appointment</a>
           <a href="#prescriptions">Prescriptions</a>
           <a href="#health-records" className={activeView === 'health-records' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveView('health-records'); }}>Health Records</a>
           <a href="#profile" className={activeView === 'profile' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveView('profile'); }}>My Profile</a>
@@ -231,14 +238,6 @@ function PatientDashboard() {
       </aside>
 
       <main className="main-area">
-        <header className="top-bar card">
-          <div className="search">
-            <input placeholder="Search records, doctors..." />
-          </div>
-          <div className="top-actions">
-            <button className="btn primary">Book Appointment</button>
-          </div>
-        </header>
 
         {activeView === 'dashboard' && (
           <>
@@ -555,6 +554,12 @@ function PatientDashboard() {
                 </div>
               </form>
             )}
+          </section>
+        )}
+
+        {activeView === 'appointments' && (
+          <section className="card" style={{ padding: '1.5rem' }}>
+            <Appointments />
           </section>
         )}
 
@@ -1096,6 +1101,7 @@ function PatientDashboard() {
           </section>
         )}
       </main>
+      {dialog && <Dialog dialog={dialog} setDialog={setDialog} />}
     </div>
   );
 }
