@@ -238,14 +238,6 @@ function PatientDashboard() {
       </aside>
 
       <main className="main-area">
-        <header className="top-bar card">
-          <div className="search">
-            <input placeholder="Search records, doctors..." />
-          </div>
-          <div className="top-actions">
-            <button className="btn primary">Book Appointment</button>
-          </div>
-        </header>
 
         {activeView === 'dashboard' && (
           <>

@@ -317,9 +317,6 @@ function Appointments(){
                         <tr>
                           <th>Doctor</th>
                           <th>Specialty</th>
-                          <th>Next Available</th>
-                          <th>Days</th>
-                          <th>Slots</th>
                           <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
                       </thead>
@@ -342,9 +339,6 @@ function Appointments(){
                                 </div>
                               </td>
                               <td>{doc.specialization || '—'}</td>
-                              <td>{next}</td>
-                              <td>{days}</td>
-                              <td>{totalSlots}</td>
                                           <td style={{ textAlign: 'right' }}>
                                             <button className="btn outline" onClick={() => { setSelectedDoctor(doc); setModalMode('view'); setModalDate(null); setSelectedSlotId(null); }}>View</button>
                                             <button className="btn primary" style={{ marginLeft: 8 }} onClick={() => { const d = (doc.dates||[]).slice().sort((a,b)=>a.date.localeCompare(b.date))[0]; if (d && d.slots && d.slots.length) { setSelectedDoctor(doc); setModalMode('book'); setModalDate(d.date); setSelectedSlotId(null); } else { setSelectedDoctor(doc); setModalMode('book'); setModalDate(null); setSelectedSlotId(null); } }}>Quick Book</button>
