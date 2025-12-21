@@ -206,6 +206,13 @@ function Home() {
           <img
             src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3"
             alt="Hospital"
+            // style={{ width: "400px", height: "250px", objectFit: "cover" }}
+            style={{
+              width: "700px",
+              height: "400px",
+              borderRadius: "20px",
+              boxShadow: "0 30px 60px rgba(0,0,0,0.15)"
+            }}
           />
         </div>
       </section>
