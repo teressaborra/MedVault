@@ -616,7 +616,7 @@ function AdminDashboard() {
   return (
     <div className="dashboard-layout">
       <aside className="left-nav card">
-        <h2 className="nav-brand">MedVault Admin</h2>
+        <h2 className="nav-brand">MEDVAULT</h2>
         <nav className="nav-list">
           <a className={activeView === 'dashboard' ? 'active' : ''} onClick={() => setActiveView('dashboard')}>Dashboard</a>
           <a className={activeView === 'patients' ? 'active' : ''} onClick={() => setActiveView('patients')}>Patient Management</a>

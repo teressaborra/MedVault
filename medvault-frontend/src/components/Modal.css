@@ -1,20 +1,15 @@
-/* ========================================
-   MODAL COMPONENT - Premium Design
-   ======================================== */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  animation: fadeIn 0.2s ease-out;
-  padding: 20px;
+  animation: fadeIn 0.2s ease;
 }
 
 @keyframes fadeIn {
@@ -28,109 +23,71 @@
 
 .modal-popup {
   background: #ffffff;
-  border-radius: var(--radius-lg);
-  padding: 40px;
-  max-width: 420px;
-  width: 100%;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
   text-align: center;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid var(--border);
-  position: relative;
-  overflow: hidden;
-}
-
-.modal-popup::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--brand-gradient);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+  border: 1px solid var(--border, #dee2e6);
 }
 
 @keyframes slideUp {
   from {
-    transform: translateY(20px) scale(0.95);
+    transform: translateY(20px);
     opacity: 0;
   }
   to {
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
     opacity: 1;
   }
 }
 
 .modal-icon {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: bold;
   margin-bottom: 1rem;
-  width: 72px;
-  height: 72px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, rgba(0, 136, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
-  color: var(--brand);
+  margin: 0 auto 1rem;
+  background: rgba(0, 153, 255, 0.1);
 }
 
 .modal-title {
-  color: var(--text);
+  color: #2c3e50;
   font-size: 1.5rem;
   margin-bottom: 0.75rem;
-  font-weight: 700;
-  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600;
 }
 
 .modal-message {
-  color: var(--muted);
-  margin-bottom: 2rem;
-  line-height: 1.6;
-  font-size: 15px;
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
 }
 
 .modal-button {
-  padding: 14px 32px;
+  padding: 0.75rem 2rem;
   border: none;
-  border-radius: var(--radius);
+  border-radius: 8px;
   color: #ffffff;
   font-weight: 600;
   cursor: pointer;
-  font-size: 15px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
   width: 100%;
-  background: var(--brand-gradient);
-  box-shadow: var(--shadow-brand);
 }
 
 .modal-button:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-brand-lg);
-  background: var(--brand-gradient-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .modal-button:active {
   transform: translateY(0);
-}
-
-.modal-button.success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
-}
-
-.modal-button.success:hover {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-}
-
-.modal-button.danger {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
-}
-
-.modal-button.danger:hover {
-  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
-  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
 }

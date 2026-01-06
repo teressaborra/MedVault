@@ -18,6 +18,8 @@ function PatientDashboard() {
   // Health Records state
   const [healthRecordsTab, setHealthRecordsTab] = useState('demographics');
   const [healthDocuments, setHealthDocuments] = useState([]);
+  const [documentRequests, setDocumentRequests] = useState([]);
+  const [docRequestsFilter, setDocRequestsFilter] = useState('pending');
   const [isAddingDocument, setIsAddingDocument] = useState(false);
   const [newDocument, setNewDocument] = useState({
     documentName: '',
@@ -42,7 +44,7 @@ function PatientDashboard() {
       fetchUserIdentificationId(cur.userId);
     }
     const appts = JSON.parse(localStorage.getItem('mv_appointments') || '[]');
-    setAppointments(appts.filter(a => a.userId === (cur ? cur.userId : null)).slice(0, 6));
+    setAppointments(appts.filter(a => a.patientUserId === (cur ? cur.userId : null)).slice(0, 6));
   }, []);
 
   const fetchUserIdentificationId = async (userId) => {
@@ -65,8 +67,61 @@ function PatientDashboard() {
       fetchProfile();
       fetchHealthDocuments();
     }
+    if (activeView === 'docpermissions' && user) {
+      fetchDocumentRequests();
+    }
+    // start polling when on docpermissions so new requests appear without reload
+    // (polling interval is cleared when view changes or component unmounts)
+    let _iv;
+    if (activeView === 'docpermissions' && user) {
+      _iv = setInterval(() => { fetchDocumentRequests(); }, 8000);
+    }
+    return () => { if (_iv) clearInterval(_iv); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView, user]);
+
+  const fetchDocumentRequests = async () => {
+    try {
+      // determine patient id: prefer loaded profile id (profileData.id), fall back to fetching profile
+      let pid = null;
+      if (profileData && (profileData.id || (profileData.patient && profileData.patient.id))) {
+        pid = profileData.id || (profileData.patient && profileData.patient.id);
+      } else {
+        try {
+          const pRes = await fetch(`http://localhost:8080/api/patient/profile/${user.userId}`);
+          const pJson = await pRes.json();
+          const prof = pJson && pJson.success && pJson.data ? pJson.data : pJson;
+          if (prof) {
+            setProfileData(prof);
+            pid = prof.id || (prof.patient && prof.patient.id);
+          }
+        } catch (pe) {
+          // ignore profile fetch error here; we'll handle missing pid below
+        }
+      }
+
+      if (!pid) {
+        setDocumentRequests([]);
+        setDialog({ type: 'alert', title: 'Error', message: 'Could not determine patient id to load document requests.' });
+        return;
+      }
+
+      const res = await fetch(`http://localhost:8080/api/document-requests/patient/${pid}`);
+      if (!res || !res.ok) {
+        setDocumentRequests([]);
+        setDialog({ type: 'alert', title: 'Error', message: 'Could not load document requests from server.' });
+        return;
+      }
+      const data = await res.json();
+      let list = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []);
+      list = (list || []).map(r => ({ ...(r || {}), status: (r && r.status ? String(r.status).toLowerCase() : '') }));
+      setDocumentRequests(list);
+    } catch (e) {
+      console.error('Error fetching document requests', e);
+      setDocumentRequests([]);
+      setDialog({ type: 'alert', title: 'Network Error', message: 'Failed to load document requests. Please try again later.' });
+    }
+  };
 
   const fetchHealthDocuments = async () => {
     try {
@@ -228,11 +283,11 @@ function PatientDashboard() {
         <h2 className="nav-brand">MedVault</h2>
         <nav className="nav-list">
           <a href="#dashboard" className={activeView === 'dashboard' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveView('dashboard'); }}>Dashboard</a>
-          <a href="#appointments" onClick={(e) => { e.preventDefault(); setActiveView('appointments'); }} className={activeView === 'appointments' ? 'active' : ''}>Book an Appointment</a>
-          <a href="#prescriptions">Prescriptions</a>
+          <a href="#appointments" onClick={(e) => { e.preventDefault(); setActiveView('book'); }} className={activeView === 'book' ? 'active' : ''}>Book an Appointment</a>
+          <a href="#appointments" onClick={(e) => { e.preventDefault(); setActiveView('appointments'); }} className={activeView === 'appointments' ? 'active' : ''}>My Appointments</a>
           <a href="#health-records" className={activeView === 'health-records' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveView('health-records'); }}>Health Records</a>
           <a href="#profile" className={activeView === 'profile' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveView('profile'); }}>My Profile</a>
-          <a href="#settings">Settings</a>
+          <a href="#docpermissions" className={activeView === 'docpermissions' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveView('docpermissions'); }}>Document Permissions</a>
           <a href="#logout" className="muted" onClick={(e) => { e.preventDefault(); handleLogout(); }}>Logout</a>
         </nav>
       </aside>
@@ -297,17 +352,23 @@ function PatientDashboard() {
               {appointments.length === 0 ? (
                 <p className="muted small" style={{ padding: '12px 0' }}>No upcoming appointments.</p>
               ) : (
-                <ul>
+                <div className="appointments-list">
                   {appointments.slice(0, 4).map(a => (
-                    <li key={a.id} className="appt-row">
-                      <div>
-                        <strong>Dr. {a.doctorName}</strong>
-                        <div className="muted small">{a.when || a.whenISO || '—'}</div>
+                    <div key={a.id} className="appt-card appt-card-compact">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                        <div className="avatar-sm">{(a.patientName && a.patientName.charAt(0)) || (a.patientUserId ? String(a.patientUserId).charAt(0) : 'P')}</div>
+                        <div>
+                          <div style={{ fontWeight: 700 }}>Dr. {a.doctorName || '—'}</div>
+                          <div className="muted small">{a.date || a.when || (a.whenISO ? new Date(a.whenISO).toLocaleString() : '—')}</div>
+                        </div>
                       </div>
-                      <div className="muted small">{a.status || 'Scheduled'}</div>
-                    </li>
+                      <div style={{ textAlign: 'right' }}>
+                        <div className="muted small">{a.slotTime || a.slot || '—'}</div>
+                        <div className={`status-pill ${a.status ? a.status.toLowerCase() : ''}`} style={{ marginTop: 6 }}>{a.status || 'Scheduled'}</div>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
 
@@ -557,9 +618,124 @@ function PatientDashboard() {
           </section>
         )}
 
-        {activeView === 'appointments' && (
+        {activeView === 'docpermissions' && (
+          <section style={{ padding: '0.5rem 0 2rem' }}>
+            <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+              <div style={{ display: 'flex', gap: 20 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <h3 style={{ margin: 0 }}>Document Permissions</h3>
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
+                      <button style={{ padding: '10px 14px', borderRadius: 999, border: 'none', background: docRequestsFilter === 'pending' ? 'var(--brand)' : 'transparent', color: docRequestsFilter === 'pending' ? '#fff' : 'var(--brand)', boxShadow: docRequestsFilter === 'pending' ? '0 6px 18px rgba(0,118,255,0.16)' : 'none', fontWeight: 700 }} onClick={() => setDocRequestsFilter('pending')}>Pending ({documentRequests.filter(r=>r.status==='pending').length})</button>
+                      <button style={{ padding: '10px 14px', borderRadius: 999, border: `2px solid var(--brand)`, background: docRequestsFilter === 'approved' ? 'var(--brand)' : 'transparent', color: docRequestsFilter === 'approved' ? '#fff' : 'var(--brand)', fontWeight: 700 }} onClick={() => setDocRequestsFilter('approved')}>Approved ({documentRequests.filter(r=>r.status==='approved').length})</button>
+                      <button style={{ padding: '10px 14px', borderRadius: 999, border: `2px solid var(--brand)`, background: docRequestsFilter === 'rejected' ? 'var(--brand)' : 'transparent', color: docRequestsFilter === 'rejected' ? '#fff' : 'var(--brand)', fontWeight: 700 }} onClick={() => setDocRequestsFilter('rejected')}>Rejected ({documentRequests.filter(r=>r.status==='rejected').length})</button>
+                    </div>
+                  </div>
+                  <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: '0 8px 24px rgba(15,23,42,0.06)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <h2 style={{ margin: 0, fontSize: 28 }}>Access Requests</h2>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                          <div className="muted" style={{ fontWeight: 600 }}>Showing: {docRequestsFilter.toUpperCase()}</div>
+                          <button className="btn outline small" onClick={() => fetchDocumentRequests()} style={{ padding: '8px 12px' }}>Refresh</button>
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: 12 }}>
+                      {(documentRequests || []).filter(r => (docRequestsFilter === 'pending' ? r.status === 'pending' : docRequestsFilter === 'approved' ? r.status === 'approved' : r.status === 'rejected')).length === 0 ? (
+                        <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--muted)' }}>No requests to show.</div>
+                      ) : (
+                        <div style={{ display: 'grid', gap: 12 }}>
+                          {(documentRequests.filter(r => (docRequestsFilter === 'pending' ? r.status === 'pending' : docRequestsFilter === 'approved' ? r.status === 'approved' : r.status === 'rejected'))).map(req => (
+                            <div key={req.id || `${req.requester}-${req.documentId}`} style={{ padding: 16, borderRadius: 8, border: '1px solid rgba(0,0,0,0.06)', background: '#fff' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                                  <div style={{ width: 44, height: 44, borderRadius: 44, background: '#f0f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{(req.requesterName || (req.requester || 'U')).charAt(0)}</div>
+                                  <div>
+                                    <div style={{ fontWeight: 700 }}>{req.requesterName || req.requester || 'Requester'}</div>
+                                    <div className="muted small">Requested: {req.requestedAt ? new Date(req.requestedAt).toLocaleString() : '—'}</div>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                  <div style={{ padding: '6px 10px', borderRadius: 6, background: '#eef6ff', color: 'var(--brand)', fontSize: 13 }}>{req.documentName || req.documentTitle || 'document'}</div>
+                                </div>
+                              </div>
+
+                              <div style={{ marginTop: 12, padding: 12, borderRadius: 6, background: '#fbfdff' }}>
+                                <div style={{ fontWeight: 700, marginBottom: 6 }}>Doctor's Note</div>
+                                <div className="muted">{req.note || req.message || 'No message provided.'}</div>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
+                                <input placeholder="Write a reply (optional)..." style={{ flex: 1, padding: '8px 12px', borderRadius: 6, border: '1px solid rgba(0,0,0,0.08)' }} />
+                                <button className="btn primary" onClick={async () => {
+                                  try {
+                                    if (!req.id) { setDialog({ type: 'alert', title: 'Error', message: 'Request id missing' }); return; }
+                                    const res = await fetch(`http://localhost:8080/api/document-requests/${req.id}/approve`, { method: 'POST' });
+                                    if (res && res.ok) {
+                                      const j = await res.json();
+                                      const updatedRaw = j && j.data ? j.data : { ...req, status: 'approved' };
+                                      const updated = { ...(updatedRaw || {}), status: (updatedRaw.status ? String(updatedRaw.status).toLowerCase() : 'approved') };
+                                      setDocumentRequests(prev => prev.map(p => p.id === req.id ? updated : p));
+                                      setDialog({ type: 'alert', title: 'Access Approved', message: 'Access approved.' });
+                                    } else {
+                                      let msg = 'Failed to approve request';
+                                      try { const text = res ? await res.text() : null; if (text) msg += ': ' + text; } catch (e) {}
+                                      setDialog({ type: 'alert', title: 'Error', message: msg });
+                                    }
+                                  } catch (err) {
+                                    console.error('Approve error', err);
+                                    setDialog({ type: 'alert', title: 'Network Error', message: 'Could not approve request. Try again later.' });
+                                  }
+                                }}>APPROVE ACCESS</button>
+                                <button className="btn outline" onClick={async () => {
+                                  try {
+                                    if (!req.id) { setDialog({ type: 'alert', title: 'Error', message: 'Request id missing' }); return; }
+                                    const res = await fetch(`http://localhost:8080/api/document-requests/${req.id}/reject`, { method: 'POST' });
+                                    if (res && res.ok) {
+                                      const j = await res.json();
+                                      const updatedRaw = j && j.data ? j.data : { ...req, status: 'rejected' };
+                                      const updated = { ...(updatedRaw || {}), status: (updatedRaw.status ? String(updatedRaw.status).toLowerCase() : 'rejected') };
+                                      setDocumentRequests(prev => prev.map(p => p.id === req.id ? updated : p));
+                                      setDialog({ type: 'alert', title: 'Access Denied', message: 'Access denied.' });
+                                    } else {
+                                      let msg = 'Failed to reject request';
+                                      try { const text = res ? await res.text() : null; if (text) msg += ': ' + text; } catch (e) {}
+                                      setDialog({ type: 'alert', title: 'Error', message: msg });
+                                    }
+                                  } catch (err) {
+                                    console.error('Reject error', err);
+                                    setDialog({ type: 'alert', title: 'Network Error', message: 'Could not reject request. Try again later.' });
+                                  }
+                                }} style={{ borderColor: 'rgba(255,0,0,0.08)', color: '#e11d48' }}>DENY</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeView === 'book' && (
           <section className="card" style={{ padding: '1.5rem' }}>
             <Appointments />
+          </section>
+        )}
+
+        {activeView === 'appointments' && (
+          <section className="card" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div>
+                <h2>My Appointments</h2>
+                <p className="muted">Your upcoming and past bookings.</p>
+              </div>
+            </div>
+
+            <PatientAppointmentsView user={user} />
           </section>
         )}
 
@@ -1107,3 +1283,129 @@ function PatientDashboard() {
 }
 
 export default PatientDashboard;
+
+// -------------------- Patient Appointments view (in-file component) --------------------
+function PatientAppointmentsView({ user }) {
+  const [appts, setAppts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dialog, setDialog] = useState(null);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      setLoading(true);
+      if (!user || !user.userId) { setAppts([]); setLoading(false); return; }
+      try {
+        const res = await fetch(`http://localhost:8080/api/appointments/patient/${user.userId}`);
+        const j = await res.json();
+        if (j && j.success && Array.isArray(j.data)) {
+          const enriched = await enrichWithDoctorInfo(j.data.slice(0, 200));
+          setAppts(enriched);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // fallback to localStorage
+      try {
+        const all = JSON.parse(localStorage.getItem('mv_appointments') || '[]');
+        const mine = all.filter(a => a.patientUserId === (user ? user.userId : null)).sort((p,q)=> (q.createdAt||'').localeCompare(p.createdAt||''));
+        const enriched = await enrichWithDoctorInfo(mine);
+        setAppts(enriched);
+      } catch (e) { setAppts([]); }
+      setLoading(false);
+    };
+    fetchAppointments();
+  }, [user]);
+
+  const enrichWithDoctorInfo = async (list) => {
+    if (!Array.isArray(list)) return list;
+    const ids = Array.from(new Set(list.filter(x => x.doctorUserId).map(x => x.doctorUserId)));
+    if (ids.length === 0) return list;
+    const map = {};
+    await Promise.all(ids.map(async id => {
+      try {
+        const r = await fetch(`http://localhost:8080/api/doctor/profile/${id}`);
+        const j = await r.json();
+        if (j) {
+          const doc = j.success && j.data ? j.data : j;
+          map[id] = { clinic: doc.clinicHospitalName || doc.clinicName || doc.clinic || doc.address || null };
+        }
+      } catch (e) { }
+    }));
+    return list.map(a => ({ ...a, doctorClinic: map[a.doctorUserId] ? map[a.doctorUserId].clinic : null }));
+  };
+
+  const handleCancel = (appt) => {
+    setDialog({ type: 'confirm', title: 'Cancel appointment', message: 'Cancel this appointment?', onConfirm: async () => {
+      try {
+        const res = await fetch(`http://localhost:8080/api/appointments/${appt.id}/cancel`, { method: 'PATCH' });
+        const j = await res.json();
+        if (j && j.success) {
+          setAppts(prev => prev.filter(x => x.id !== appt.id));
+          try {
+            const all = JSON.parse(localStorage.getItem('mv_appointments') || '[]');
+            const idx = all.findIndex(x => x.id === appt.id);
+            if (idx !== -1) { all.splice(idx,1); localStorage.setItem('mv_appointments', JSON.stringify(all)); }
+          } catch (e) {}
+        }
+      } catch (e) {
+        try {
+          const all = JSON.parse(localStorage.getItem('mv_appointments') || '[]');
+          const idx = all.findIndex(x => x.id === appt.id);
+          if (idx !== -1) { all[idx].status = 'CANCELLED'; localStorage.setItem('mv_appointments', JSON.stringify(all)); setAppts(prev => prev.filter(x=>x.id!==appt.id)); }
+        } catch (e2) {}
+      }
+      setDialog(null);
+    }});
+  };
+
+  if (loading) return <div className="muted">Loading appointments…</div>;
+  if (!appts || appts.length === 0) return <div className="muted">No appointments found.</div>;
+
+  // group by date
+  const byDate = {};
+  appts.forEach(a => {
+    const d = a.date || a.when || (a.whenISO ? a.whenISO.slice(0,10) : 'Unknown');
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(a);
+  });
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {Object.keys(byDate).sort().map(dateKey => (
+        <div key={dateKey}>
+          <h4 style={{ marginTop: 0 }}>{dateKey}</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {byDate[dateKey].map(a => (
+              <div key={a.id} className="appt-card">
+                <div className="appt-left">
+                  <div className="avatar-sm">{(a.doctorName||'D').charAt(0)}</div>
+                  <div style={{ marginLeft: 12 }}>
+                    <div style={{ fontWeight: 700 }}>Dr. {a.doctorName || '—'}</div>
+                    <div className="muted small">{a.doctorClinic || ''}</div>
+                    <div className="muted small">{a.date || a.when || (a.whenISO ? new Date(a.whenISO).toLocaleString() : '—')}</div>
+                  </div>
+                </div>
+                <div className="appt-meta">
+                  <div className="muted small">{a.slotTime || a.slot || '—'}</div>
+                  {(() => {
+                    const s = (a.status || '').toLowerCase();
+                    const show = ['pending','approved','rejected','cancelled','completed'].includes(s);
+                    if (!show) return <div />;
+                    return <div className={`status-pill ${s}`} style={{ marginTop: 6 }}>{s === 'approved' ? 'APPROVED' : s === 'pending' ? 'PENDING' : s === 'rejected' ? 'REJECTED' : s.toUpperCase()}</div>;
+                  })()}
+                </div>
+                <div className="appt-actions">
+                  <button className="btn outline" onClick={() => handleCancel(a)}>Cancel</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {dialog && <Dialog dialog={dialog} setDialog={setDialog} />}
+    </div>
+  );
+}

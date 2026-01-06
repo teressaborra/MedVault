@@ -366,3 +366,40 @@
 		width: 100%;
 	}
 }
+
+/* Doctor dashboard buttons and badges */
+.status-badge {
+	display: inline-block;
+	padding: 6px 10px;
+	border-radius: 999px;
+	font-weight: 700;
+	font-size: 12px;
+	color: white;
+}
+.status-approved { background: #16a34a; }
+.status-pending { background: #f59e0b; color: #fff; }
+.status-rejected { background: #ef4444; }
+
+.view-profile-btn {
+	background: linear-gradient(90deg,#7c3aed,#6d28d9);
+	color: white;
+	padding: 8px 14px;
+	border-radius: 8px;
+	border: none;
+	font-weight: 700;
+}
+.approve-btn {
+	background: #16a34a;
+	color: white;
+	padding: 8px 12px;
+	border-radius: 8px;
+	border: none;
+	font-weight: 700;
+}
+.reject-btn {
+	background: transparent;
+	color: #ef4444;
+	border: 1px solid #fca5a5;
+	padding: 6px 8px;
+	border-radius: 8px;
+}

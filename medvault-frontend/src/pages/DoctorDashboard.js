@@ -26,6 +26,7 @@ function DoctorDashboard() {
   const [showSlotsModal, setShowSlotsModal] = useState(false);
   const [activeSchedule, setActiveSchedule] = useState(null);
   const [dialog, setDialog] = useState(null); // { type:'alert'|'confirm'|'prompt', title, message, defaultValue, onConfirm }
+  const [patientModal, setPatientModal] = useState(null); // { profile, appt }
   const [rescheduleAppt, setRescheduleAppt] = useState(null);
   const [rescheduleDate, setRescheduleDate] = useState(null);
   const [rescheduleSlotId, setRescheduleSlotId] = useState(null);
@@ -78,7 +79,7 @@ function DoctorDashboard() {
   }, [activeView, user]);
 
   useEffect(() => {
-    // load doctor's appointments when My Appointments view active
+    // load doctor's appointments when My Appointments view active (backend-only)
     let iv;
     const fetchDoctorAppointments = async () => {
       if (!user || !user.userId) return;
@@ -86,28 +87,27 @@ function DoctorDashboard() {
         const res = await fetch(`http://localhost:8080/api/appointments/doctor/${user.userId}`);
         const j = await res.json();
         if (j && j.success && Array.isArray(j.data)) {
-          setDoctorAppointments(j.data.slice(0, 100));
+          const enriched = await enrichAppointmentsWithPatientNames(j.data.slice(0, 100));
+          setDoctorAppointments(enriched);
           return;
         }
+        if (Array.isArray(j)) {
+          const enriched = await enrichAppointmentsWithPatientNames(j.slice(0,100));
+          setDoctorAppointments(enriched);
+          return;
+        }
+        // no valid data shape -> clear list
+        setDoctorAppointments([]);
       } catch (e) {
-        // ignore and fallback to localStorage
+        console.error('Failed to load doctor appointments from backend', e);
+        setDoctorAppointments([]);
       }
-      const all = JSON.parse(localStorage.getItem('mv_appointments') || '[]');
-      const mine = all.filter(a => a.doctorUserId === user.userId).sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||''));
-      setDoctorAppointments(mine);
     };
 
-    if (activeView === 'appointments') {
+    if (activeView === 'appointments' || activeView === 'sessions') {
       fetchDoctorAppointments();
       iv = setInterval(fetchDoctorAppointments, 8000);
-
-      // listen for localStorage changes (same-browser) to update instantly
-      const onStorage = (e) => {
-        if (e.key === 'mv_appointments') fetchDoctorAppointments();
-      };
-      window.addEventListener('storage', onStorage);
-
-      return () => { clearInterval(iv); window.removeEventListener('storage', onStorage); };
+      return () => { clearInterval(iv); };
     }
   }, [activeView, user]);
 
@@ -129,6 +129,27 @@ function DoctorDashboard() {
       setIsEditMode(true);
       setFormData({ userId: user.userId });
     }
+  };
+
+  // Enrich appointments with patient names by fetching patient profiles for missing names
+  const enrichAppointmentsWithPatientNames = async (appts) => {
+    if (!Array.isArray(appts)) return appts;
+    const ids = Array.from(new Set(appts.filter(a => !a.patientName && a.patientUserId).map(a => a.patientUserId)));
+    if (ids.length === 0) return appts;
+
+    const idNameMap = {};
+    await Promise.all(ids.map(async (id) => {
+      try {
+        const res = await fetch(`http://localhost:8080/api/patient/profile/${id}`);
+        const data = await res.json();
+        const name = (data && (data.name || data.fullName)) || ((data && data.firstName && data.lastName) ? `${data.firstName} ${data.lastName}` : null);
+        if (name) idNameMap[id] = name;
+      } catch (e) {
+        // ignore
+      }
+    }));
+
+    return appts.map(a => ({ ...a, patientName: a.patientName || idNameMap[a.patientUserId] || a.patientName }));
   };
 
   const handleChange = (e) => {
@@ -178,6 +199,181 @@ function DoctorDashboard() {
     setMessage('Document uploaded successfully! Remember to save your profile.');
   };
 
+  const formatDate = (d) => {
+    if (!d) return '-';
+    try {
+      const dt = new Date(d);
+      if (isNaN(dt)) return d;
+      return dt.toLocaleDateString();
+    } catch (e) { return d; }
+  };
+
+  // Helper: view patient profile in a modal with approve/reject actions and records
+  const viewPatientProfile = async (patientId, appt) => {
+    if (!patientId) return;
+    try {
+      const res = await fetch(`http://localhost:8080/api/patient/profile/${patientId}`);
+      const j = await res.json();
+      const profile = (j && j.success && j.data) ? j.data : (j && (j.fullName || j.name) ? j : null);
+
+      // fetch patient records (labs / documents) and vitals/history if available
+      let records = [];
+      let vitals = null;
+      let history = null;
+
+      const tryFetchAlternatives = async (urls) => {
+        for (const u of urls) {
+          try {
+            const r = await fetch(u);
+            if (!r) continue;
+            if (r.status === 404) continue;
+            const jj = await r.json();
+            if (jj && jj.success && jj.data !== undefined) return jj.data;
+            if (Array.isArray(jj)) return jj;
+            if (jj && (jj.records || jj.history || jj.vitals)) return jj.records || jj.history || jj.vitals;
+            // if API returns object with fields, return it
+            if (jj && typeof jj === 'object') return jj;
+          } catch (err) {
+            // try next
+          }
+        }
+        return null;
+      };
+
+      // Backend exposes health documents at /api/health-documents/patient/{userId}
+      try {
+        const docsRes = await fetch(`http://localhost:8080/api/health-documents/patient/${patientId}`);
+        if (docsRes && docsRes.status !== 404) {
+          const docsJson = await docsRes.json();
+          if (Array.isArray(docsJson)) records = docsJson;
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // Also fetch any document access requests for this patient so we can mark access granted/requested for this doctor
+      try {
+        const reqsRes = await fetch(`http://localhost:8080/api/document-requests/patient/${patientId}`);
+        if (reqsRes && reqsRes.status !== 404) {
+          const reqsJson = await reqsRes.json();
+          const reqs = Array.isArray(reqsJson) ? reqsJson : (reqsJson && Array.isArray(reqsJson.data) ? reqsJson.data : []);
+          // annotate records with access status relative to current doctor (user)
+          if (Array.isArray(records) && records.length > 0 && Array.isArray(reqs)) {
+            records = records.map(r => {
+              const match = reqs.find(q => q.document != null && ((q.document.id && (q.document.id === r.id || q.document.id == r.id)) || (q.documentId && q.documentId === r.id) || (q.documentId && q.documentId == r.id)) && q.requesterId === user?.userId);
+              if (match) {
+                if (match.status && match.status.toUpperCase() === 'APPROVED') return { ...r, access: 'granted', requestId: match.id };
+                if (match.status && match.status.toUpperCase() === 'PENDING') return { ...r, access: 'requested', requestId: match.id };
+              }
+              return r;
+            });
+          }
+        }
+      } catch (e) {
+        // ignore errors fetching requests from backend - do not fallback to localStorage
+      }
+
+      // No vitals/history endpoints in this backend; medical data will be derived from patient profile fields (existingConditions, currentMedications, vitals etc.)
+
+      setPatientModal({ profile, appt, records, vitals, history, tab: 'personal' });
+      return;
+    } catch (e) {
+      console.error('Failed to fetch patient profile', e);
+      setPatientModal({ profile: null, appt, records: [], vitals: null, history: null, tab: 'personal' });
+    }
+  };
+
+  // Request access to a specific patient document (doctor action)
+  const requestDocumentAccess = async (doc, patientId, note) => {
+    // optimistic UI: mark requested locally first
+    setPatientModal(prev => ({ ...prev, records: (prev.records||[]).map(x => x.id === doc.id ? { ...x, access: 'requested' } : x) }));
+
+    // if patientId not provided, try to resolve from loaded profile
+    let pid = patientId;
+    if (!pid && patientModal && patientModal.profile) {
+      pid = patientModal.profile.userId || patientModal.profile.id || (patientModal.profile.user && (patientModal.profile.user.id || patientModal.profile.user.userId));
+      if (pid && typeof pid === 'string' && pid.match(/^\d+$/)) pid = parseInt(pid, 10);
+    }
+
+    const payload = {
+      documentId: doc.id,
+      documentName: doc.documentName || doc.title || doc.name,
+      patientId: pid,
+      requesterId: user?.userId,
+      requesterName: user?.name || user?.fullName,
+      note: note || ''
+    };
+
+    try {
+      const res = await fetch('http://localhost:8080/api/document-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res) {
+        setDialog({ type: 'alert', title: 'Network Error', message: 'No response from server.' });
+        return;
+      }
+
+      if (res.status === 404) {
+        setDialog({ type: 'alert', title: 'Request Failed', message: 'Server endpoint not found. Could not submit access request.' });
+        // revert optimistic state
+        setPatientModal(prev => ({ ...prev, records: (prev.records||[]).map(x => x.id === doc.id ? { ...x, access: x.access === 'requested' ? undefined : x.access } : x) }));
+        return;
+      }
+
+      const j = await res.json();
+      console.log('document-requests POST response:', j);
+      if (j && (j.success || j.id || j.data)) {
+        setDialog({ type: 'alert', title: 'Access Requested', message: 'Access request submitted.' });
+        // success - notify user
+        setPatientModal(prev => ({ ...prev, records: (prev.records||[]).map(x => x.id === doc.id ? { ...x, access: 'requested', requestId: j.id || (j.data && j.data.id) } : x) }));
+      } else {
+        setDialog({ type: 'alert', title: 'Request Failed', message: j && j.message ? j.message : 'Failed to create access request.' });
+        // revert optimistic state
+        setPatientModal(prev => ({ ...prev, records: (prev.records||[]).map(x => x.id === doc.id ? { ...x, access: x.access === 'requested' ? undefined : x.access } : x) }));
+      }
+    } catch (err) {
+      console.error('Error creating document request', err);
+      setDialog({ type: 'alert', title: 'Network Error', message: 'Could not submit access request to server. Please try again later.' });
+      // revert optimistic state
+      setPatientModal(prev => ({ ...prev, records: (prev.records||[]).map(x => x.id === doc.id ? { ...x, access: x.access === 'requested' ? undefined : x.access } : x) }));
+    }
+  };
+
+  const refreshDoctorAppointments = async () => {
+    if (!user || !user.userId) return;
+    try {
+      const res = await fetch(`http://localhost:8080/api/appointments/doctor/${user.userId}`);
+      const j = await res.json();
+      if (j && j.success && Array.isArray(j.data)) {
+        const enriched = await enrichAppointmentsWithPatientNames(j.data.slice(0, 100));
+        setDoctorAppointments(enriched);
+        return;
+      }
+      if (Array.isArray(j)) { const enriched = await enrichAppointmentsWithPatientNames(j.slice(0,100)); setDoctorAppointments(enriched); }
+    } catch (e) { console.error('Failed to refresh doctor appointments', e); }
+  };
+
+  const approveAppt = async (a) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/appointments/${a.id}/approve`, { method: 'POST' });
+      const j = await res.json();
+      if (j && (j.success || j.ok)) { await refreshDoctorAppointments(); return; }
+    } catch (e) { console.error('Approve error', e); }
+    await refreshDoctorAppointments();
+  };
+
+  const rejectAppt = async (a) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/appointments/${a.id}/reject`, { method: 'POST' });
+      const j = await res.json();
+      if (j && (j.success || j.ok)) { await refreshDoctorAppointments(); return; }
+    } catch (e) { console.error('Reject error', e); }
+    await refreshDoctorAppointments();
+  };
+
   const stats = {
     patients: 150,
     appointments: 2543,
@@ -187,13 +383,14 @@ function DoctorDashboard() {
   return (
     <div className="dashboard-layout">
       <aside className="left-nav card">
-        <h2 className="nav-brand">Doctor App</h2>
+        <h2 className="nav-brand">MEDVAULT</h2>
         <nav className="nav-list">
           <a className={activeView === 'dashboard' ? 'active' : ''} onClick={() => setActiveView('dashboard')}>Dashboard</a>
-          <a className={activeView === 'appointments' ? 'active' : ''} onClick={() => setActiveView('appointments')}>My Appointments</a>
           <a className={activeView === 'profile' ? 'active' : ''} onClick={() => setActiveView('profile')}>My Profile</a>
           <a className={activeView === 'schedule' ? 'active' : ''} onClick={() => setActiveView('schedule')}>My Schedule</a>
-          <a>Documents</a>
+                    <a className={activeView === 'appointments' ? 'active' : ''} onClick={() => setActiveView('appointments')}>My Appointments</a>
+
+          <a className={activeView === 'sessions' ? 'active' : ''} onClick={() => setActiveView('sessions')}>My Sessions</a>
           <a>Settings</a>
           <a className="muted" onClick={() => {
             localStorage.removeItem('mv_current_user');
@@ -204,14 +401,7 @@ function DoctorDashboard() {
       </aside>
 
       <main className="main-area">
-        <header className="top-bar card">
-          <div className="search">
-            <input placeholder="Search patients or appointments..." />
-          </div>
-          <div className="top-actions">
-            <button className="btn primary">Make Appointment</button>
-          </div>
-        </header>
+        {/* header removed per request */}
 
         {activeView === 'dashboard' && (
           <>
@@ -315,6 +505,116 @@ function DoctorDashboard() {
           </>
         )}
 
+        {patientModal && (
+          <div className="modal-overlay" onClick={() => setPatientModal(null)}>
+            <div className="modal-popup" onClick={e => e.stopPropagation()} style={{ maxWidth: 880, padding: 0 }}>
+              <div style={{ background: 'var(--brand-dark, #0f172a)', color: '#fff', padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 12, borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
+                <div style={{ width: 56, height: 56, borderRadius: 999, background: '#2b2f6a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18 }}>{(patientModal.profile && (patientModal.profile.fullName || patientModal.profile.name) || 'PT').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 18 }}>{(patientModal.profile && (patientModal.profile.fullName || patientModal.profile.name)) || 'Patient'}</div>
+                  <div className="muted" style={{ fontSize: 13 }}>{patientModal.profile?.gender ? `${patientModal.profile.gender} | ` : ''}{patientModal.profile?.age || patientModal.profile?.dob || ''}</div>
+                </div>
+                <button className="btn outline" onClick={() => setPatientModal(null)} style={{ marginLeft: 'auto', marginRight: 12 }}>✖</button>
+              </div>
+
+              <div style={{ display: 'flex', gap: 0 }}>
+                <div style={{ flex: 1, padding: 16 }}>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                    {['personal','medical','docs'].map(t => (
+                      <button key={t} className={"btn outline"} onClick={() => setPatientModal(prev => ({ ...prev, tab: t }))} style={{ textTransform: 'capitalize' }}>{t === 'personal' ? 'Personal Info' : t === 'medical' ? 'Medical Data' : 'Docs'}</button>
+                    ))}
+                  </div>
+
+                  <div style={{ minHeight: 260 }}>
+                    {patientModal.tab === 'personal' && (
+                      <div style={{ display: 'grid', gap: 10 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                          <div><strong>Full Name</strong><div className="muted">{patientModal.profile?.fullName || patientModal.profile?.name || '-'}</div></div>
+                          <div><strong>Gender</strong><div className="muted">{patientModal.profile?.gender || '-'}</div></div>
+                          <div><strong>Date of Birth</strong><div className="muted">{formatDate(patientModal.profile?.dateOfBirth || patientModal.profile?.dob)}</div></div>
+                          <div><strong>Mobile</strong><div className="muted">{patientModal.profile?.mobileNumber || patientModal.profile?.mobile || '-'}</div></div>
+                          <div style={{ gridColumn: '1 / -1' }}><strong>Address</strong><div className="muted">{patientModal.profile?.address || '-'}</div></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {patientModal.tab === 'medical' && (
+                      <div style={{ display: 'grid', gap: 10 }}>
+                                {(() => {
+                                  const p = patientModal.profile || {};
+                                  const lines = [];
+                                  if (p.existingConditions) lines.push({ k: 'Existing Conditions', v: p.existingConditions });
+                                  if (p.currentMedications) lines.push({ k: 'Current Medications', v: p.currentMedications });
+                                  if (p.allergies) lines.push({ k: 'Allergies', v: p.allergies });
+                                  if (p.weight || p.height || p.bmi) lines.push({ k: 'Measurements', v: `${p.weight ? `Weight: ${p.weight}kg` : ''}${p.weight && p.height ? ' • ' : ''}${p.height ? `Height: ${p.height}cm` : ''}${p.bmi ? ` • BMI: ${p.bmi}` : ''}` });
+                                  if (p.bloodPressureSystolic || p.bloodPressureDiastolic) lines.push({ k: 'Blood Pressure', v: `${p.bloodPressureSystolic || '-'} / ${p.bloodPressureDiastolic || '-'}` });
+                                  if (p.pulseRate) lines.push({ k: 'Pulse Rate', v: `${p.pulseRate}` });
+                                  if (p.temperature) lines.push({ k: 'Temperature', v: `${p.temperature}` });
+                                  if (p.respiratoryRate) lines.push({ k: 'Respiratory Rate', v: `${p.respiratoryRate}` });
+
+                                  if (lines.length === 0) return <div className="muted">No medical data available.</div>;
+                                  return lines.map((h, i) => (
+                                    <div key={i} style={{ padding: 12, borderRadius: 8, background: 'rgba(0,0,0,0.02)' }}>
+                                      <div style={{ fontWeight: 700 }}>{h.k}</div>
+                                      <div className="muted" style={{ fontSize: 13 }}>{h.v}</div>
+                                    </div>
+                                  ));
+                                })()}
+                      </div>
+                    )}
+
+                    {patientModal.tab === 'docs' && (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        {(patientModal.records || []).map(r => (
+                          <div key={r.id} style={{ padding: 12, borderRadius: 8, border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <div style={{ width: 36, height: 36, borderRadius: 6, background: (r.access === 'granted' || r.access === 'granted_by_patient') ? '#e6fffb' : '#fff0f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {(r.access === 'granted' || r.access === 'granted_by_patient') ? '🔓' : '🔒'}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 700 }}>{r.title || r.name || r.documentName || 'Document'}</div>
+                                <div className="muted" style={{ fontSize: 12 }}>{r.date || r.documentDate || r.createdAt || ''}</div>
+                              </div>
+                            </div>
+                            <div>
+                              {(r.access === 'granted' || r.access === 'granted_by_patient') ? (
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                  <div style={{ background: '#06b6d4', color: '#fff', padding: '6px 10px', borderRadius: 999, fontSize: 12 }}>ACCESS GRANTED</div>
+                                  <a
+                                    href={r.documentUrl || (r.document && (r.document.documentUrl || r.document.url)) || '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn outline small"
+                                    style={{ padding: '6px 10px' }}
+                                  >
+                                    Open
+                                  </a>
+                                </div>
+                              ) : (
+                                <button className="btn outline" onClick={() => {
+                                  const pid = patientModal?.profile?.userId || patientModal?.profile?.id || patientModal?.appt?.patientUserId || patientModal?.appt?.patientId;
+                                  requestDocumentAccess(r, pid);
+                                }}>REQUEST ACCESS</button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {(patientModal.records || []).length === 0 && <div className="muted">No documents available in the patient's medical record.</div>}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
+                    <button className="btn outline" onClick={() => setPatientModal(null)}>Close</button>
+                    <button className="reject-btn" onClick={async () => { await rejectAppt(patientModal.appt); setPatientModal(null); }}>Reject</button>
+                    <button className="approve-btn" onClick={async () => { await approveAppt(patientModal.appt); setPatientModal(null); }} style={{ marginLeft: 8 }}>Approve</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {rescheduleAppt && (
           <div className="modal-overlay" onClick={() => { setRescheduleAppt(null); setRescheduleDate(null); setRescheduleSlotId(null); }}>
             <div className="modal-popup" onClick={(e)=>e.stopPropagation()} style={{ maxWidth: 720 }}>
@@ -392,75 +692,167 @@ function DoctorDashboard() {
               {doctorAppointments.length === 0 ? (
                 <div className="muted">No appointments yet.</div>
               ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>Patient</th>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>When</th>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>Slot</th>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>Status</th>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {doctorAppointments.map(a => (
-                      <tr key={a.id} style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                        <td style={{ padding: '8px' }}>{a.patientName || `User ${a.patientUserId || '—'}`}</td>
-                        <td style={{ padding: '8px' }}>{a.date || a.when || a.whenISO || '—'}</td>
-                        <td style={{ padding: '8px' }}>{a.slotTime || a.slot || '—'}</td>
-                        <td style={{ padding: '8px' }}>{a.status || 'CONFIRMED'}</td>
-                        <td style={{ padding: '8px' }}>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn outline" onClick={() => {
-                              setDialog({ type: 'confirm', title: 'Cancel Appointment', message: 'Cancel this appointment?', onConfirm: async () => {
-                                try {
-                                  const res = await fetch(`http://localhost:8080/api/appointments/${a.id}/cancel`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-                                  const j = await res.json();
-                                  if (j && j.success) {
-                                    // remove cancelled appointment from view
-                                    try {
-                                      const r2 = await fetch(`http://localhost:8080/api/appointments/doctor/${user.userId}`);
-                                      const j2 = await r2.json();
-                                      if (j2 && j2.success && Array.isArray(j2.data)) {
-                                        // exclude cancelled ones
-                                        const filtered = j2.data.filter(a2 => (a2.status || '').toUpperCase() !== 'CANCELLED');
-                                        setDoctorAppointments(filtered.slice(0,100));
-                                      } else {
-                                        setDoctorAppointments(prev => prev.filter(x => x.id !== a.id));
-                                      }
-                                    } catch (e2) {
-                                      setDoctorAppointments(prev => prev.filter(x => x.id !== a.id));
-                                    }
-                                    // also update localStorage copy
-                                    try {
-                                      const all = JSON.parse(localStorage.getItem('mv_appointments') || '[]');
-                                      const idx = all.findIndex(x => x.id === a.id || (x.doctorUserId===a.doctorUserId && x.date===a.date && x.slotTime===a.slotTime));
-                                      if (idx !== -1) { all.splice(idx,1); localStorage.setItem('mv_appointments', JSON.stringify(all)); }
-                                    } catch (e3) { }
-                                  }
-                                } catch (e) {
-                                  // fallback to localStorage update
-                                  try {
-                                    const all = JSON.parse(localStorage.getItem('mv_appointments') || '[]');
-                                    const idx = all.findIndex(x => x.id === a.id || (x.doctorUserId===a.doctorUserId && x.date===a.date && x.slotTime===a.slotTime));
-                                    if (idx !== -1) { all[idx].status = 'CANCELLED'; localStorage.setItem('mv_appointments', JSON.stringify(all)); }
-                                    const mine = all.filter(x => x.doctorUserId === user.userId).sort((p,q)=> (q.createdAt||'').localeCompare(p.createdAt||''));
-                                    setDoctorAppointments(mine);
-                                  } catch (e3) { }
-                                }
-                                setDialog(null);
-                              }});
-                            }}>Cancel</button>
-                            <button className="btn outline" onClick={() => {
-                              setRescheduleAppt(a); setRescheduleDate(null); setRescheduleSlotId(null);
-                            }}>Reschedule</button>
+                <div className="appointments-list">
+                  {(() => {
+                    const byDate = {};
+                    (doctorAppointments || []).forEach(a => {
+                      const d = a.date || a.when || (a.whenISO ? a.whenISO.slice(0,10) : 'Unknown');
+                      if (!byDate[d]) byDate[d] = [];
+                      byDate[d].push(a);
+                    });
+
+                    return Object.keys(byDate).sort().map(dateKey => (
+                      <div key={dateKey} className="date-group">
+                        <h4 style={{ marginTop: 0 }}>{dateKey}</h4>
+                        {(byDate[dateKey] || []).map(a => (
+                          <div key={a.id} className="appt-card">
+                            <div className="appt-left">
+                              <div className="avatar-sm">{(a.patientName && a.patientName.charAt(0)) || (a.patientUserId ? String(a.patientUserId).charAt(0) : '?')}</div>
+                              <div style={{ marginLeft: 12 }}>
+                                <div style={{ fontWeight: 700 }}>{a.patientName || `User ${a.patientUserId || '—'}`}</div>
+                                <div className="muted small">{a.date || a.when || (a.whenISO ? new Date(a.whenISO).toLocaleString() : '—')}</div>
+                              </div>
+                            </div>
+
+                            <div className="appt-meta">
+                              <div className="muted small">{a.slotTime || a.slot || '—'}</div>
+                              {(() => {
+                                const s = (a.status || '').toLowerCase();
+                                const show = ['pending','approved','rejected','cancelled','completed'].includes(s);
+                                if (!show) return <div />;
+                                return <div className={`status-pill ${s}`} style={{ marginTop: 6 }}>{s === 'approved' ? 'APPROVED' : s === 'pending' ? 'PENDING' : s === 'rejected' ? 'REJECTED' : s.toUpperCase()}</div>;
+                              })()}
+                            </div>
+
+                            <div className="appt-actions">
+                              <button className="view-profile-btn" onClick={() => viewPatientProfile(a.patientUserId || a.patientId, a)}>View Profile →</button>
+                            </div>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        ))}
+                      </div>
+                    ));
+                  })()}
+                </div>
               )}
+            </div>
+          </section>
+        )}
+
+        {activeView === 'sessions' && (
+          <section className="card" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div>
+                <h2>My Sessions</h2>
+                <p className="muted">Upcoming and previous patient sessions.</p>
+              </div>
+              <div>
+                <div className="stat-pill">{(doctorAppointments || []).length} total</div>
+              </div>
+            </div>
+
+            <div>
+              {doctorAppointments.length === 0 ? (
+                <div className="muted">No sessions available.</div>
+              ) : (() => {
+                const now = new Date();
+                const parseApptDT = (a) => {
+                  // Prefer explicit ISO if provided
+                  if (a.whenISO) {
+                    const parsed = new Date(a.whenISO);
+                    if (!isNaN(parsed)) return parsed;
+                  }
+
+                  // If we have a date + slotTime (e.g. "09:00-09:30"), construct a local Date from components
+                  if (a.date && a.slotTime) {
+                    try {
+                      const dateParts = a.date.split('-').map(Number); // [YYYY,MM,DD]
+                      const start = (a.slotTime.split('-')[0] || '00:00').trim();
+                      const timeParts = start.split(':').map(Number); // [HH,MM]
+                      if (dateParts.length >= 3) {
+                        const year = dateParts[0];
+                        const month = (dateParts[1] || 1) - 1;
+                        const day = dateParts[2] || 1;
+                        const hour = timeParts[0] || 0;
+                        const minute = timeParts[1] || 0;
+                        return new Date(year, month, day, hour, minute, 0, 0);
+                      }
+                    } catch (e) {
+                      // fallback
+                    }
+                  }
+
+                  // If only date provided, return start of that day local
+                  if (a.date) {
+                    const p = a.date.split('-').map(Number);
+                    if (p.length >= 3) return new Date(p[0], (p[1]||1)-1, p[2], 0, 0, 0, 0);
+                  }
+                  return null;
+                };
+
+                const annotated = (doctorAppointments || []).map(a => ({ ...a, __dt: parseApptDT(a) })).filter(x => x.__dt);
+                const upcoming = annotated.filter(x => x.__dt >= now).sort((p,q) => p.__dt - q.__dt);
+                const previous = annotated.filter(x => x.__dt < now).sort((p,q) => q.__dt - p.__dt);
+
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div>
+                      <h4 style={{ marginTop: 0 }}>Upcoming Sessions ({upcoming.length})</h4>
+                      {upcoming.length === 0 ? <div className="muted">No upcoming sessions</div> : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          {upcoming.map(a => (
+                            <div key={a.id} className="appt-card">
+                              <div className="appt-left">
+                                <div className="avatar-sm">{(a.patientName && a.patientName.charAt(0)) || (a.patientUserId ? String(a.patientUserId).charAt(0) : '?')}</div>
+                                <div style={{ marginLeft: 12 }}>
+                                  <div style={{ fontWeight: 700 }}>{a.patientName || `User ${a.patientUserId || '—'}`}</div>
+                                  <div className="muted small">{a.date || (a.__dt ? a.__dt.toLocaleString() : '—')}</div>
+                                </div>
+                              </div>
+                              <div className="appt-meta">
+                                <div className="muted small">{a.slotTime || a.slot || '—'}</div>
+                                {(() => {
+                                  const s = (a.status || '').toLowerCase();
+                                  const show = ['pending','approved','rejected','cancelled','completed'].includes(s);
+                                  if (!show) return <div />;
+                                  return <div className={`status-pill ${s}`} style={{ marginTop: 6 }}>{s === 'approved' ? 'APPROVED' : s === 'pending' ? 'PENDING' : s === 'rejected' ? 'REJECTED' : s.toUpperCase()}</div>;
+                                })()}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <h4 style={{ marginTop: 0 }}>Previous Sessions ({previous.length})</h4>
+                      {previous.length === 0 ? <div className="muted">No previous sessions</div> : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          {previous.map(a => (
+                            <div key={a.id} className="appt-card">
+                              <div className="appt-left">
+                                <div className="avatar-sm">{(a.patientName && a.patientName.charAt(0)) || (a.patientUserId ? String(a.patientUserId).charAt(0) : '?')}</div>
+                                <div style={{ marginLeft: 12 }}>
+                                  <div style={{ fontWeight: 700 }}>{a.patientName || `User ${a.patientUserId || '—'}`}</div>
+                                  <div className="muted small">{a.date || (a.__dt ? a.__dt.toLocaleString() : '—')}</div>
+                                </div>
+                              </div>
+                              <div className="appt-meta">
+                                <div className="muted small">{a.slotTime || a.slot || '—'}</div>
+                                {(() => {
+                                  const s = (a.status || '').toLowerCase();
+                                  const show = ['pending','approved','rejected','cancelled','completed'].includes(s);
+                                  if (!show) return <div />;
+                                  return <div className={`status-pill ${s}`} style={{ marginTop: 6 }}>{s === 'approved' ? 'APPROVED' : s === 'pending' ? 'PENDING' : s === 'rejected' ? 'REJECTED' : s.toUpperCase()}</div>;
+                                })()}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </section>
         )}
@@ -480,6 +872,9 @@ function DoctorDashboard() {
                 <input type="date" value={newScheduleDate} onChange={e => setNewScheduleDate(e.target.value)} />
                   <button className="btn outline" onClick={() => {
                     if (!newScheduleDate) { setDialog({ type: 'alert', title: 'Validation', message: 'Please choose a date' }); return; }
+                    // prevent adding past dates
+                    const todayStr = new Date().toISOString().slice(0,10);
+                    if (newScheduleDate < todayStr) { setDialog({ type: 'alert', title: 'Invalid Date', message: 'Cannot add past dates to your schedule' }); return; }
                     if (selectedDates.includes(newScheduleDate)) { setDialog({ type: 'alert', title: 'Validation', message: 'Date already selected' }); return; }
                     // prevent adding a date that's already uploaded for this doctor
                     if ((schedules || []).some(s => s.date === newScheduleDate)) { setDialog({ type: 'alert', title: 'Already Scheduled', message: `Date ${newScheduleDate} is already uploaded for your account` }); return; }
@@ -559,6 +954,15 @@ function DoctorDashboard() {
                   <div style={{ marginLeft: 'auto' }}>
                     <button className="btn primary" onClick={async () => {
                       if (selectedDates.length === 0) { setDialog({ type: 'alert', title: 'Validation', message: 'Select at least one date with slots before uploading' }); return; }
+                                          if (selectedDates.length === 0) { setDialog({ type: 'alert', title: 'Validation', message: 'Select at least one date with slots before uploading' }); return; }
+                                          // block uploading past dates
+                                          const todayStr2 = new Date().toISOString().slice(0,10);
+                                          const past = selectedDates.find(d => d < todayStr2);
+                                          if (past) { setDialog({ type: 'alert', title: 'Invalid Selection', message: `Cannot upload past date ${past}` }); return; }
+                                          if (!currentSelectedDate) { setDialog({ type: 'alert', title: 'Validation', message: 'Please pick a date from Selected Dates to add slots' }); return; }
+                                          // prevent adding slots to past dates
+                                          const todayStr3 = new Date().toISOString().slice(0,10);
+                                          if (currentSelectedDate < todayStr3) { setDialog({ type: 'alert', title: 'Invalid Date', message: 'Cannot add slots for past dates' }); return; }
                       // build entries array
                       const docName = (profileData && profileData.fullName) || (user && user.name) || 'Unknown';
                       const specialization = (profileData && profileData.specialization) || 'N/A';

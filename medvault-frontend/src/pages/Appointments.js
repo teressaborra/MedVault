@@ -13,6 +13,9 @@ function Appointments(){
   const [message, setMessage] = useState('');
   const [doctorProfile, setDoctorProfile] = useState(null);
   const [cityFilter, setCityFilter] = useState('Any');
+  const [isDoctorView, setIsDoctorView] = useState(false);
+  const [appointments, setAppointments] = useState([]);
+  const [patientProfileModal, setPatientProfileModal] = useState(null);
   const [specialtyFilter, setSpecialtyFilter] = useState('Any');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -92,6 +95,71 @@ function Appointments(){
     }
     return true;
   });
+
+  // load doctor appointments if current user is a doctor (backend only)
+  useEffect(() => {
+    const cur = JSON.parse(localStorage.getItem('mv_current_user') || 'null');
+    const role = cur?.role || (cur?.roles ? cur.roles[0] : null);
+    if (role && (role === 'doctor' || (typeof role === 'string' && role.toLowerCase() === 'doctor') || role === 'DOCTOR')) {
+      setIsDoctorView(true);
+      (async () => {
+        try {
+          const userId = cur?.userId || cur?.id;
+          if (!userId) return;
+          const res = await fetch(`http://localhost:8080/api/appointments/doctor/${userId}`);
+          const j = await res.json();
+          if (j && j.success && Array.isArray(j.data)) { setAppointments(j.data); return; }
+          if (Array.isArray(j)) { setAppointments(j); return; }
+        } catch (e) { console.error('Failed to load doctor appointments from backend', e); setAppointments([]); }
+      })();
+    }
+  }, []);
+
+  const refreshAppointments = async () => {
+    const cur = JSON.parse(localStorage.getItem('mv_current_user') || 'null');
+    const userId = cur?.userId || cur?.id;
+    if (!userId) return;
+    try {
+      const res = await fetch(`http://localhost:8080/api/appointments/doctor/${userId}`);
+      const j = await res.json();
+      if (j && j.success && Array.isArray(j.data)) { setAppointments(j.data); return; }
+      if (Array.isArray(j)) { setAppointments(j); return; }
+    } catch (e) { console.error('Failed to refresh appointments', e); }
+  };
+
+  const approveAppointment = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/appointments/${id}/approve`, { method: 'POST' });
+      const j = await res.json();
+      if (j && (j.success || j.ok)) { await refreshAppointments(); return; }
+    } catch (e) { console.error('Approve failed', e); }
+    await refreshAppointments();
+  };
+
+  const rejectAppointment = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/appointments/${id}/reject`, { method: 'POST' });
+      const j = await res.json();
+      if (j && (j.success || j.ok)) { await refreshAppointments(); return; }
+    } catch (e) { console.error('Reject failed', e); }
+    await refreshAppointments();
+  };
+
+  const viewPatient = async (patientId) => {
+    if (!patientId) return;
+    try {
+      const r = await fetch(`http://localhost:8080/api/patient/profile/${patientId}`);
+      const j = await r.json();
+      if (j && j.success && j.data) { setPatientProfileModal(j.data); return; }
+      if (j && (j.fullName || j.name)) { setPatientProfileModal(j); return; }
+    } catch (e) { }
+    try {
+      const all = JSON.parse(localStorage.getItem('mv_users') || '[]');
+      const found = all.find(u => String(u.userId || u.id) === String(patientId));
+      if (found) setPatientProfileModal(found);
+    } catch (e) { }
+  };
+
 
   const handleBook = (doctorUserId, doctorName, date, slot, scheduleId) => {
     // Start reservation flow: call reserve endpoint and show countdown + confirm
@@ -302,59 +370,116 @@ function Appointments(){
           <p className="muted">Choose a city, search for your specialist, select a convenient time slot and confirm your visit. You will receive appointment confirmation via email.</p>
         </section>
         <section style={{ marginTop: 24 }}>
-          <h3>Available Doctors & Slots</h3>
-          {message && <div style={{ padding: 8, background: 'rgba(16,185,129,0.06)', color: '#059669', borderRadius: 6 }}>{message}</div>}
-          {loading ? (
-              <div className="muted">Loading available slots…</div>
-            ) : (
-              <div style={{ marginTop: 12 }}>
-                  {filteredAvailable.length === 0 && (
-                    <div className="muted" style={{ padding: 12 }}>No available slots. Doctors must upload time slots first.</div>
-                  )}
-                  {filteredAvailable.length > 0 && (
-                    <table className="doctors-table">
-                      <thead>
-                        <tr>
-                          <th>Doctor</th>
-                          <th>Specialty</th>
-                          <th style={{ textAlign: 'right' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredAvailable.map((doc, i) => {
-                          const totalSlots = (doc.dates || []).reduce((acc,d)=>acc + (d.slots?d.slots.length:0),0);
-                          const days = (doc.dates||[]).length;
-                          const next = (doc.dates||[]).slice().sort((a,b)=>a.date.localeCompare(b.date))[0]?.date || '—';
-                          return (
-                            <tr key={`${doc.doctorUserId}_${i}`}>
-                              <td className="doctor-cell">
-                                {doc.avatarUrl ? (
-                                  <img className="avatar-img" src={doc.avatarUrl} alt={doc.doctorName} />
-                                ) : (
-                                  <div className="avatar">{(doc.doctorName || 'Dr').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</div>
-                                )}
-                                <div style={{ marginLeft: 12 }}>
-                                  <div className="doctor-name">{doc.doctorName}</div>
-                                  <div className="muted doctor-spec" style={{ fontSize: 13 }}>{doc.specialization || '—'}</div>
-                                </div>
-                              </td>
-                              <td>{doc.specialization || '—'}</td>
-                                          <td style={{ textAlign: 'right' }}>
-                                            <button className="btn outline" onClick={() => { setSelectedDoctor(doc); setModalMode('view'); setModalDate(null); setSelectedSlotId(null); }}>View</button>
-                                            <button className="btn primary" style={{ marginLeft: 8 }} onClick={() => { const d = (doc.dates||[]).slice().sort((a,b)=>a.date.localeCompare(b.date))[0]; if (d && d.slots && d.slots.length) { setSelectedDoctor(doc); setModalMode('book'); setModalDate(d.date); setSelectedSlotId(null); } else { setSelectedDoctor(doc); setModalMode('book'); setModalDate(null); setSelectedSlotId(null); } }}>Quick Book</button>
-                                          </td>
+          {isDoctorView ? (
+            <>
+              <h3>My Appointments</h3>
+              {appointments.length === 0 ? (
+                <div className="muted" style={{ padding: 12 }}>No appointment requests.</div>
+              ) : (
+                <table className="doctors-table">
+                  <thead>
+                    <tr>
+                      <th>Patient</th>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>Reason</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'right' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {appointments.map((a, i) => (
+                      <tr key={a.id || i}>
+                        <td className="doctor-cell">
+                          <div className="avatar">{(a.patientName || (a.patient && a.patient.fullName) || 'PT').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</div>
+                          <div style={{ marginLeft: 12 }}>
+                            <div className="doctor-name">{a.patientName || (a.patient && a.patient.fullName) || 'Unknown'}</div>
+                            <div className="muted" style={{ fontSize: 13 }}>ID: #{a.patientUserId || a.patientId || '—'}</div>
+                          </div>
+                        </td>
+                        <td>{a.date || (a.whenISO||'').split('T')[0] || '—'}</td>
+                        <td>{a.slotTime || a.time || (a.whenISO ? (a.whenISO||'').split('T')[1]?.substr(0,5) : '—')}</td>
+                        <td className="muted">{a.reason || a.note || '-'}</td>
+                        {(() => {
+                          const s = (a.status || '').toLowerCase();
+                          const show = s === 'pending' || s === 'approved' || s === 'rejected';
+                          if (!show) return <td />;
+                          const cls = s === 'approved' ? 'status-approved' : s === 'pending' ? 'status-pending' : 'status-rejected';
+                          const label = s === 'approved' ? 'APPROVED' : s === 'pending' ? 'PENDING' : 'REJECTED';
+                          return <td><span className={`status-badge ${cls}`}>{label}</span></td>;
+                        })()}
+                        <td style={{ textAlign: 'right' }}>
+                          <button className="view-profile-btn" onClick={() => viewPatient(a.patientUserId || a.patientId)}>View Profile</button>
+                          { (a.status || '').toLowerCase() === 'pending' && (
+                            <>
+                              <button className="reject-btn" onClick={() => rejectAppointment(a.id)} title="Reject" style={{ marginLeft: 8 }}>✖</button>
+                              <button className="approve-btn" onClick={() => approveAppointment(a.id)} title="Approve" style={{ marginLeft: 8 }}>APPROVE</button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </>
+          ) : (
+            <>
+              <h3>Available Doctors & Slots</h3>
+              {/* confirmation message intentionally removed for doctor/patient views */}
+              {loading ? (
+                  <div className="muted">Loading available slots…</div>
+                ) : (
+                  <div style={{ marginTop: 12 }}>
+                      {filteredAvailable.length === 0 && (
+                        <div className="muted" style={{ padding: 12 }}>No available slots. Doctors must upload time slots first.</div>
+                      )}
+                      {filteredAvailable.length > 0 && (
+                        <table className="doctors-table">
+                          <thead>
+                            <tr>
+                              <th>Doctor</th>
+                              <th>Specialty</th>
+                              <th style={{ textAlign: 'right' }}>Actions</th>
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-            )}
+                          </thead>
+                          <tbody>
+                            {filteredAvailable.map((doc, i) => {
+                              const totalSlots = (doc.dates || []).reduce((acc,d)=>acc + (d.slots?d.slots.length:0),0);
+                              const days = (doc.dates||[]).length;
+                              const next = (doc.dates||[]).slice().sort((a,b)=>a.date.localeCompare(b.date))[0]?.date || '—';
+                              return (
+                                <tr key={`${doc.doctorUserId}_${i}`}>
+                                  <td className="doctor-cell">
+                                    {doc.avatarUrl ? (
+                                      <img className="avatar-img" src={doc.avatarUrl} alt={doc.doctorName} />
+                                    ) : (
+                                      <div className="avatar">{(doc.doctorName || 'Dr').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</div>
+                                    )}
+                                    <div style={{ marginLeft: 12 }}>
+                                      <div className="doctor-name">{doc.doctorName}</div>
+                                      <div className="muted doctor-spec" style={{ fontSize: 13 }}>{doc.specialization || '—'}</div>
+                                    </div>
+                                  </td>
+                                  <td>{doc.specialization || '—'}</td>
+                                              <td style={{ textAlign: 'right' }}>
+                                                <button className="btn outline" onClick={() => { setSelectedDoctor(doc); setModalMode('view'); setModalDate(null); setSelectedSlotId(null); }}>View</button>
+                                                <button className="btn primary" style={{ marginLeft: 8 }} onClick={() => { const d = (doc.dates||[]).slice().sort((a,b)=>a.date.localeCompare(b.date))[0]; if (d && d.slots && d.slots.length) { setSelectedDoctor(doc); setModalMode('book'); setModalDate(d.date); setSelectedSlotId(null); } else { setSelectedDoctor(doc); setModalMode('book'); setModalDate(null); setSelectedSlotId(null); } }}>Quick Book</button>
+                                              </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                )}
+            </>
+          )}
         </section>
         {selectedDoctor && (
           <div className="modal-overlay" onClick={() => { setSelectedDoctor(null); setModalDate(null); }}>
-            <div className="modal-popup" onClick={e => e.stopPropagation()} style={{ maxWidth: 720 }}>
+            <div className="modal-popup" onClick={e => e.stopPropagation()} style={{ maxWidth: 560, padding: '20px' }}>
               <h3 style={{ marginTop: 0 }}>{selectedDoctor.doctorName}</h3>
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
                 <div className="muted">{selectedDoctor.specialization}</div>
@@ -464,6 +589,31 @@ function Appointments(){
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
                 <button className="btn outline" onClick={() => { setSelectedDoctor(null); setModalDate(null); }}>Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {patientProfileModal && (
+          <div className="modal-overlay" onClick={() => setPatientProfileModal(null)}>
+            <div className="modal-popup" onClick={e => e.stopPropagation()} style={{ maxWidth: 560, padding: 20 }}>
+              <h3 style={{ marginTop: 0 }}>{patientProfileModal.fullName || patientProfileModal.name || 'Patient'}</h3>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div className="avatar">{(patientProfileModal.fullName || patientProfileModal.name || 'PT').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</div>
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{patientProfileModal.fullName || patientProfileModal.name}</div>
+                    <div className="muted">ID: {patientProfileModal.userId || patientProfileModal.id || '—'}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 12 }}><div style={{ minWidth: 120, color: 'var(--muted)', fontWeight: 700 }}>Contact</div><div className="muted">{patientProfileModal.mobileNumber || patientProfileModal.mobile || '—'}</div></div>
+                  <div style={{ display: 'flex', gap: 12 }}><div style={{ minWidth: 120, color: 'var(--muted)', fontWeight: 700 }}>Email</div><div className="muted">{patientProfileModal.email || '-'}</div></div>
+                  <div style={{ display: 'flex', gap: 12 }}><div style={{ minWidth: 120, color: 'var(--muted)', fontWeight: 700 }}>Age / Sex</div><div className="muted">{(patientProfileModal.age || patientProfileModal.dob || '-') + ' / ' + (patientProfileModal.sex || '-')}</div></div>
+                  <div style={{ display: 'flex', gap: 12 }}><div style={{ minWidth: 120, color: 'var(--muted)', fontWeight: 700 }}>Address</div><div className="muted">{patientProfileModal.address || '-'}</div></div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                  <button className="btn outline" onClick={() => setPatientProfileModal(null)}>Close</button>
+                </div>
               </div>
             </div>
           </div>
